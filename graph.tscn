@@ -1,0 +1,36 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://graph.gd" id="1_script"]
+
+[node name="Graph" type="VBoxContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Toolbar" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="AddNotepad" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+ Notepad"
+
+[node name="AddExec" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+ Execute"
+
+[node name="Spacer" type="Control" parent="Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GraphEdit" type="GraphEdit" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+zoom_min = 0.2
+
+[connection signal="pressed" from="Toolbar/AddNotepad" to="." method="add_notepad_node"]
+[connection signal="pressed" from="Toolbar/AddExec" to="." method="add_exec_node"]

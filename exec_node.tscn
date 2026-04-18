@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://exec_node.gd" id="1_script"]
+
+[node name="ExecNode" type="GraphNode"]
+offset_position = Vector2(0, 0)
+size = Vector2(200, 80)
+title = "Execute"
+script = ExtResource("1_script")
+
+[node name="RunButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Run"
+
+[node name="Spacer" type="Control" parent="."]
+layout_mode = 2
+
+[connection signal="pressed" from="RunButton" to="." method="_on_run_pressed"]

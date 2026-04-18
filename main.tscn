@@ -1,0 +1,88 @@
+[gd_scene load_steps=4 format=3 uid="uid://bnote001"]
+
+[ext_resource type="Script" path="res://note.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://graph.tscn" id="2_graph"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toolbar"]
+bg_color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="Note" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="Panel" type="PanelContainer" parent="Margin"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin/Panel"]
+layout_mode = 2
+
+[node name="TitleBar" type="HBoxContainer" parent="Margin/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FileButton" type="MenuButton" parent="Margin/Panel/VBox/TitleBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "File"
+
+[node name="ViewButton" type="MenuButton" parent="Margin/Panel/VBox/TitleBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "View"
+
+[node name="Spacer" type="Control" parent="Margin/Panel/VBox/TitleBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Margin/Panel/VBox/TitleBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "X"
+
+[node name="EditorView" type="TextEdit" parent="Margin/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GraphView" parent="Margin/Panel/VBox" instance=ExtResource("2_graph")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="OpenDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+use_native_dialog = true
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.md ; Markdown", "*.py ; Python", "*.txt ; Text")
+
+[node name="SaveDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+use_native_dialog = true
+file_mode = 4
+access = 2
+filters = PackedStringArray("*.md ; Markdown", "*.py ; Python", "*.txt ; Text")
