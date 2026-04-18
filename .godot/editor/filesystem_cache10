@@ -1,8 +1,8 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1776509497
+::res://::1776510663
 black_boxicon.png::CompressedTexture2D::2238845798466830260::1776492253::1776492265::1::::<><><>0<>0<>fd8895fcf53bfea4c4097bc6c6900e19<>res://.godot/imported/black_boxicon.png-b897f95dcb0121b234ce75141372c392.ctex::
-bool_node.gd::GDScript::1579785781195343351::1776507244::0::1::::<>GraphNode<><>0<>0<><>::
-bool_node.tscn::PackedScene::-1::1776507183::0::1::::<><><>0<>0<><>::res://bool_node.gd<>res://black_boxicon.png
+bool_node.gd::GDScript::1579785781195343351::1776509953::0::1::::<>GraphNode<><>0<>0<><>::
+bool_node.tscn::PackedScene::-1::1776509978::0::1::::<><><>0<>0<><>::res://bool_node.gd<>res://black_boxicon.png
 definition.md::TextFile::-1::1776475500::0::1::::<><><>0<>0<><>::
 dssdfsdf.md::TextFile::-1::1776500532::0::1::::<><><>0<>0<><>::
 edges-graph.md::TextFile::-1::1776476745::0::1::::<><><>0<>0<><>::
@@ -24,7 +24,8 @@ note.gd::GDScript::4162617641187522144::1776500833::0::1::::<>Control<><>0<>0<><
 notepad_icon.png::CompressedTexture2D::1873211868203321486::1776491274::1776491489::1::::<><><>0<>0<>2072c33b4d495cfd35d96138f68f64e6<>res://.godot/imported/notepad_icon.png-c5675c7fb9b1d5864d63b4ff34dd2f15.ctex::
 notepad_node.gd::GDScript::1885633481450663741::1776504771::0::1::::<>GraphNode<><>0<>0<><>::
 notepad_node.tscn::PackedScene::-1::1776504275::0::1::::<><><>0<>0<><>::res://notepad_node.gd<>res://notepad_icon.png
-pc_node.gd::GDScript::953381593866224143::1776509326::0::1::::<>GraphNode<><>0<>0<><>::
+pc_icon.png::CompressedTexture2D::5380043957240607770::1776510642::1776510663::1::::<><><>0<>0<>14d7ee09951b4beeed7cd37cf90e458b<>res://.godot/imported/pc_icon.png-1b41633b462e551bd0008a623c317334.ctex::
+pc_node.gd::GDScript::953381593866224143::1776509994::0::1::::<>GraphNode<><>0<>0<><>::
 pc_node.tscn::PackedScene::-1::1776509318::0::1::::<><><>0<>0<><>::res://pc_node.gd<>res://black_boxicon.png
 plan-graph.md::TextFile::-1::1776476788::0::1::::<><><>0<>0<><>::
 plan.md::TextFile::-1::1776471988::0::1::::<><><>0<>0<><>::
