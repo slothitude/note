@@ -15,7 +15,7 @@ var _node_counter := 0
 var _visited: Array[StringName] = []
 var graph_file_path: String = ""
 var _graph_stack: Array = []
-var _current_subgraph: GraphNode = null
+var _current_subgraph_name: String = ""
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -188,27 +188,34 @@ func add_graph_output_node() -> void:
 func _on_enter_subgraph(sub_graph_node: GraphNode) -> void:
 	# Save current graph state
 	var parent_data := _serialize_current_graph()
-	_graph_stack.append({"data": parent_data, "subgraph": _current_subgraph})
-	_current_subgraph = sub_graph_node
+	_graph_stack.append({"data": parent_data, "subgraph_name": _current_subgraph_name})
+	_current_subgraph_name = sub_graph_node.name
+	# Grab internal data before clearing (node gets freed)
+	var internal := sub_graph_node.internal_data.duplicate(true)
 	# Clear and load sub-graph
 	_clear_all_nodes()
 	_node_counter = 0
-	_build_nodes_from_data(sub_graph_node.internal_data)
+	_build_nodes_from_data(internal)
 	_show_subgraph_nav(true)
 
 
 func _on_exit_subgraph() -> void:
 	if _graph_stack.is_empty():
 		return
-	# Save current sub-graph back to the SubGraph node
-	_current_subgraph.internal_data = _serialize_current_graph()
-	_current_subgraph._rebuild_ports()
+	# Save current sub-graph state
+	var subgraph_data := _serialize_current_graph()
 	# Pop parent state
 	var parent: Dictionary = _graph_stack.pop_back()
-	_current_subgraph = parent["subgraph"]
+	_current_subgraph_name = parent["subgraph_name"]
 	_clear_all_nodes()
 	_node_counter = 0
 	_build_nodes_from_data(parent["data"])
+	# Find the SubGraph node we just exited and update its internal data
+	if _current_subgraph_name != "":
+		var node := graph_edit.get_node_or_null(NodePath(_current_subgraph_name))
+		if node and node.has_signal("edit_pressed"):
+			node.internal_data = subgraph_data
+			node.call("_rebuild_ports")
 	_show_subgraph_nav(_graph_stack.size() > 0)
 
 
