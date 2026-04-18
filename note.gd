@@ -31,6 +31,7 @@ func _ready() -> void:
 	_connect_signals()
 	_update_title()
 	_load_temp()
+	_select_default_notepad()
 	text_edit.grab_focus()
 	_switch_view("edit")
 
@@ -244,6 +245,15 @@ func _auto_save_and_quit() -> void:
 	if current_file_path != "" and unsaved:
 		_write_file(current_file_path)
 	get_tree().quit()
+
+
+func _select_default_notepad() -> void:
+	var ge: GraphEdit = graph_view.get_node_or_null("GraphEdit")
+	if ge:
+		for child in ge.get_children():
+			if child is GraphNode and child.has_method("set_text"):
+				_selected_notepad = child
+				break
 
 
 func _load_temp() -> void:
