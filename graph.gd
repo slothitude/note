@@ -484,17 +484,6 @@ func _save_to_file(path: String) -> void:
 	if f:
 		f.store_string(JSON.stringify(data, "\t"))
 		f.close()
-	for conn in graph_edit.get_connection_list():
-		data.connections.append({
-			"from_node": String(conn.from_node),
-			"from_port": conn.from_port,
-			"to_node": String(conn.to_node),
-			"to_port": conn.to_port,
-		})
-	var f := FileAccess.open(path, FileAccess.WRITE)
-	if f:
-		f.store_string(JSON.stringify(data, "\t"))
-		f.close()
 
 
 func _load_from_file(path: String) -> void:
