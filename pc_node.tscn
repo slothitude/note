@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://pc_node.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://black_boxicon.png" id="2_icon"]
+[ext_resource type="Texture2D" path="res://pc_icon.png" id="2_icon"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
 texture = ExtResource("2_icon")
