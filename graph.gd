@@ -127,7 +127,10 @@ func add_bool_node() -> void:
 	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
 	node.delete_pressed.connect(_on_node_delete)
 	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)(exec_node: GraphNode) -> void:
+	graph_edit.add_child(node)
+
+
+func _on_node_run(exec_node: GraphNode) -> void:
 	_execute_node(exec_node)
 
 
