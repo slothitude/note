@@ -22,7 +22,6 @@ func _ready() -> void:
 	set_slot(2, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(5, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	mode_option.add_item("One-shot")
-	mode_option.add_item("Repeating")
 	mode_option.add_item("Countdown")
 	_timer = Timer.new()
 	add_child(_timer)
@@ -56,9 +55,7 @@ func _on_timer_tick() -> void:
 	match mode_option.selected:
 		0:  # One-shot
 			_timer.stop()
-		1:  # Repeating
-			pass
-		2:  # Countdown
+		1:  # Countdown
 			countdown_remaining -= 1
 			if countdown_remaining <= 0:
 				_timer.stop()
@@ -76,8 +73,7 @@ func _update_status() -> void:
 	else:
 		match mode_option.selected:
 			0: status_label.text = "Fired"
-			1: status_label.text = "Running"
-			2: status_label.text = "Running (%d)" % countdown_remaining
+			1: status_label.text = "Running (%d)" % countdown_remaining
 
 
 func _on_mode_changed(_index: int) -> void:
