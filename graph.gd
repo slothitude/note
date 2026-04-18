@@ -185,7 +185,7 @@ func load_graph() -> void:
 		f.close()
 		return
 	f.close()
-	var data := json.data
+	var data: Dictionary = json.data
 	for node_data in data.nodes:
 		var node: GraphNode
 		if node_data.type == "notepad":
@@ -202,7 +202,7 @@ func load_graph() -> void:
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			node.run_pressed.connect(_on_node_run)
 			graph_edit.add_child(node)
-		_node_counter = max(_node_counter, node_data.name.to_int() + 1)
+		_node_counter = maxi(_node_counter, int(node_data.name.to_int()) + 1)
 	for conn_data in data.connections:
 		graph_edit.connect_node(
 			StringName(conn_data.from_node), conn_data.from_port,
