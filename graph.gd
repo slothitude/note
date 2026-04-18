@@ -135,14 +135,20 @@ func _execute_node(exec_node: GraphNode) -> void:
 		if conn.from_node == exec_node.name and conn.from_port == 0:
 			var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
 			if target and target.has_method("set_text"):
-				target.set_text(stdout_text)
+				match conn.to_port:
+					1: target.set_text(stdout_text + "\n" + target.text_buffer)
+					2: target.set_text(target.text_buffer + "\n" + stdout_text)
+					_: target.set_text(stdout_text)
 
 	if stderr_text != "":
 		for conn in connections:
 			if conn.from_node == exec_node.name and conn.from_port == 1:
 				var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
 				if target and target.has_method("set_text"):
-					target.set_text(stderr_text)
+					match conn.to_port:
+						1: target.set_text(stderr_text + "\n" + target.text_buffer)
+						2: target.set_text(target.text_buffer + "\n" + stderr_text)
+						_: target.set_text(stderr_text)
 
 
 var _pending_delete_node: GraphNode = null

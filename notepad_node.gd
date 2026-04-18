@@ -12,6 +12,8 @@ var file_path: String = ""
 func _ready() -> void:
 	_update_title()
 	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
+	set_slot(1, true, 1, Color.CYAN, false, 0, Color.WHITE)
+	set_slot(2, true, 2, Color.GREEN, false, 0, Color.WHITE)
 
 
 func set_file(path: String) -> void:
