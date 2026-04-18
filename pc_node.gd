@@ -33,8 +33,11 @@ func set_input(port: int, text: String) -> void:
 		1:  # restart
 			counter = 0
 		2:  # jump
-			if text.is_valid_int():
-				counter = int(text) % max_val if max_val > 0 else 0
+			var val := text.strip_edges()
+			if val.is_valid_int():
+				counter = int(val) % max_val if max_val > 0 else 0
+			elif val.is_valid_float():
+				counter = int(float(val)) % max_val if max_val > 0 else 0
 	_update_display()
 	text_updated.emit()
 
