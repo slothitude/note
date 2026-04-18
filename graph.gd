@@ -6,6 +6,7 @@ const NotepadNodeScene := preload("res://notepad_node.tscn")
 const ExecNodeScene := preload("res://exec_node.tscn")
 const FindFileNodeScene := preload("res://find_file_node.tscn")
 const BoolNodeScene := preload("res://bool_node.tscn")
+const PCNodeScene := preload("res://pc_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
@@ -138,7 +139,14 @@ func add_bool_node() -> void:
 	graph_edit.add_child(node)
 
 
-func _on_node_run(exec_node: GraphNode) -> void:
+func add_pc_node() -> void:
+	var node := PCNodeScene.instantiate()
+	node.name = "PC%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)(exec_node: GraphNode) -> void:
 	_execute_node(exec_node)
 
 
@@ -234,6 +242,8 @@ func _on_delete_action(action: StringName) -> void:
 
 
 func _get_output_text(source: GraphNode, from_port: int) -> String:
+	if source.has_method("get_port_output"):
+		return source.get_port_output(from_port)
 	if source.get("output_value") != null:
 		return str(source.get("output_value"))
 	if source.get("text_buffer") != null:
@@ -280,6 +290,8 @@ func save_graph() -> void:
 			var node_type := "exec"
 			if child.has_signal("open_pressed"):
 				node_type = "notepad"
+			elif child.has_method("get_port_output"):
+				node_type = "pc"
 			elif child.has_method("set_input"):
 				node_type = "bool"
 			elif child.get("file_path") != null and not child.has_signal("open_pressed"):
@@ -293,6 +305,8 @@ func save_graph() -> void:
 			if child.has_signal("open_pressed"):
 				node_data["text"] = child.text_buffer
 				node_data["file_path"] = child.file_path
+			elif child.has_method("get_port_output"):
+				node_data["counter"] = child.counter
 			elif child.has_method("set_input"):
 				node_data["input_a"] = child.input_a
 				node_data["input_b"] = child.input_b
@@ -338,7 +352,17 @@ func load_graph() -> void:
 				node.set_text(node_data.text)
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.set_file(node_data.file_path)
-		elif node_data.type == "bool":
+		elif node_data.type == "pc":
+		node = PCNodeScene.instantiate()
+		node.name = node_data.name
+		node.position_offset = Vector2(node_data.x, node_data.y)
+		node.delete_pressed.connect(_on_node_delete)
+		node.text_updated.connect(_propagate_text.bind(node))
+		graph_edit.add_child(node)
+		if node_data.has("counter"):
+			node.counter = int(node_data.counter)
+			node.call("_update_display")
+	elif node_data.type == "bool":
 			node = BoolNodeScene.instantiate()
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
