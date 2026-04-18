@@ -1,9 +1,9 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1776511791
+::res://::1776512930
 black_boxicon.png::CompressedTexture2D::2238845798466830260::1776492253::1776492265::1::::<><><>0<>0<>fd8895fcf53bfea4c4097bc6c6900e19<>res://.godot/imported/black_boxicon.png-b897f95dcb0121b234ce75141372c392.ctex::
 booliean.png::CompressedTexture2D::9211221071922818645::1776510982::1776511007::1::::<><><>0<>0<>114b14516889eff7457fcc16663f005a<>res://.godot/imported/booliean.png-c858c397e2b8e1aac7d3cdb10ef995ef.ctex::
 bool_node.gd::GDScript::1579785781195343351::1776509953::0::1::::<>GraphNode<><>0<>0<><>::
-bool_node.tscn::PackedScene::-1::1776509978::0::1::::<><><>0<>0<><>::res://bool_node.gd<>res://black_boxicon.png
+bool_node.tscn::PackedScene::6007643777041228693::1776512168::0::1::::<><><>0<>0<><>::uid://d4h8p24kgdqp6::::res://booliean.png<>uid://wri3ug6r3ae6::::res://bool_node.gd
 definition.md::TextFile::-1::1776475500::0::1::::<><><>0<>0<><>::
 dssdfsdf.md::TextFile::-1::1776500532::0::1::::<><><>0<>0<><>::
 edges-graph.md::TextFile::-1::1776476745::0::1::::<><><>0<>0<><>::
@@ -13,8 +13,8 @@ exec_node.tscn::PackedScene::-1::1776505695::0::1::::<><><>0<>0<><>::res://exec_
 export_presets.cfg::TextFile::-1::1776498617::0::1::::<><><>0<>0<><>::
 find_file_node.gd::GDScript::5122947468227125232::1776507009::0::1::::<>GraphNode<><>0<>0<><>::
 find_file_node.tscn::PackedScene::-1::1776505867::0::1::::<><><>0<>0<><>::res://find_file_node.gd<>res://black_boxicon.png
-graph.gd::GDScript::1591176490367952022::1776509457::0::1::::<>VBoxContainer<><>0<>0<><>::
-graph.tscn::PackedScene::1786932592487744813::1776509203::0::1::::<><><>0<>0<><>::uid://ww1pdvwiflra::::res://graph.gd
+graph.gd::GDScript::1591176490367952022::1776512604::0::1::::<>VBoxContainer<><>0<>0<><>::
+graph.tscn::PackedScene::1786932592487744813::1776512468::0::1::::<><><>0<>0<><>::uid://ww1pdvwiflra::::res://graph.gd
 graph_note.tscn::PackedScene::1046791298396044629::1776492086::0::1::::<><><>0<>0<><>::uid://1xnr42vu01uw::::res://notepad_icon.png
 hello.md::TextFile::-1::1776499204::0::1::::<><><>0<>0<><>::
 icon.png::CompressedTexture2D::3438037290740468688::1776478385::1776489648::1::::<><><>0<>0<>6235bd2826f2cd7e0d7377bd43cff120<>res://.godot/imported/icon.png-487276ed1e3a0c39cad0279d744ee560.ctex::
