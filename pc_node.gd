@@ -18,6 +18,8 @@ func _ready() -> void:
 	set_slot(4, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	set_slot(5, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	set_slot(6, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	set_slot(7, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	set_slot(8, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	_update_display()
 
 
