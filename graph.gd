@@ -35,6 +35,9 @@ func _connect_signals() -> void:
 
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
 	graph_edit.connect_node(from, from_port, to, to_port)
+	var source := graph_edit.get_node_or_null(NodePath(from))
+	if source and source.has_method("set_text"):
+		_propagate_text(source)
 
 
 func _on_disconnection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
