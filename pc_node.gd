@@ -46,7 +46,8 @@ func get_port_output(port: int) -> String:
 
 
 func _update_display() -> void:
-	count_label.text = "Count: %d" % counter
+	count_label.text = "%d" % counter
+	count_label.add_theme_font_size_override("font_size", 48)
 	for i in range(6):
 		var label: Label = get_node_or_null("Out%d" % i)
 		if label:
