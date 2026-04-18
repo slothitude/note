@@ -26,7 +26,8 @@ func set_text(text: String) -> void:
 
 func _search_for_file(fname: String) -> String:
 	var output := []
-	var args := PackedStringArray(["/C", "where /R C:\\Users\\aaron " + fname])
+	var search_root := "C:\\Users\\aaron\\exploring"
+	var args := PackedStringArray(["/C", "where /R " + search_root + " " + fname])
 	OS.execute("cmd", args, output)
 	for line in output:
 		var path := str(line).strip_edges()
