@@ -1,6 +1,7 @@
 extends GraphNode
 
 signal open_pressed(node: GraphNode)
+signal delete_pressed(node: GraphNode)
 
 var text_buffer: String = ""
 var file_path: String = ""
@@ -38,3 +39,7 @@ func _update_preview() -> void:
 
 func _on_open_pressed() -> void:
 	open_pressed.emit(self)
+
+
+func _on_delete_pressed() -> void:
+	delete_pressed.emit(self)

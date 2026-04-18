@@ -61,6 +61,7 @@ func _add_default_notepad() -> void:
 	_node_counter += 1
 	node.position_offset = Vector2(100 + (_node_counter * 20), 100 + (_node_counter * 20))
 	node.open_pressed.connect(_on_notepad_open)
+	node.delete_pressed.connect(_on_node_delete)
 	graph_edit.add_child(node)
 	var temp_path := OS.get_temp_dir().path_join("note_untitled.tmp")
 	if FileAccess.file_exists(temp_path):
@@ -76,6 +77,7 @@ func add_default_notepad() -> void:
 	_node_counter += 1
 	node.position_offset = Vector2(100 + (_node_counter * 20), 100 + (_node_counter * 20))
 	node.open_pressed.connect(_on_notepad_open)
+	node.delete_pressed.connect(_on_node_delete)
 	graph_edit.add_child(node)
 
 
@@ -85,6 +87,7 @@ func add_notepad_node() -> void:
 	_node_counter += 1
 	node.position_offset = Vector2(100 + (_node_counter * 30), 100 + (_node_counter * 30))
 	node.open_pressed.connect(_on_notepad_open)
+	node.delete_pressed.connect(_on_node_delete)
 	graph_edit.add_child(node)
 
 
@@ -94,6 +97,7 @@ func add_exec_node() -> void:
 	_node_counter += 1
 	node.position_offset = Vector2(400 + (_node_counter * 30), 100 + (_node_counter * 30))
 	node.run_pressed.connect(_on_node_run)
+	node.delete_pressed.connect(_on_node_delete)
 	graph_edit.add_child(node)
 
 
@@ -139,6 +143,11 @@ func _execute_node(exec_node: GraphNode) -> void:
 				var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
 				if target and target.has_method("set_text"):
 					target.set_text(stderr_text)
+
+
+func _on_node_delete(node: GraphNode) -> void:
+	_clear_connections_for(node.name)
+	node.queue_free()
 
 
 func _on_notepad_open(node: GraphNode) -> void:
@@ -194,6 +203,7 @@ func load_graph() -> void:
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			node.open_pressed.connect(_on_notepad_open)
+			node.delete_pressed.connect(_on_node_delete)
 			graph_edit.add_child(node)
 			if node_data.has("text"):
 				node.set_text(node_data.text)
@@ -204,6 +214,7 @@ func load_graph() -> void:
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			node.run_pressed.connect(_on_node_run)
+			node.delete_pressed.connect(_on_node_delete)
 			graph_edit.add_child(node)
 		_node_counter = maxi(_node_counter, int(node_data.name.to_int()) + 1)
 	for conn_data in data.connections:
