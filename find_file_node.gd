@@ -9,19 +9,18 @@ var file_path: String = ""
 
 func _ready() -> void:
 	title = "Find File"
-	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
-	set_slot(1, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
 
 func set_text(text: String) -> void:
-	file_path = ""
 	var fname := text.strip_edges()
 	if fname == "":
+		file_path = "false"
 		result.text = "(empty)"
 		return
 	var found := _search_for_file(fname)
-	file_path = found
-	result.text = found if found != "" else "Not found"
+	file_path = found if found != "" else "false"
+	result.text = found if found != "" else "false"
 
 
 func _search_for_file(fname: String) -> String:
