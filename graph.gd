@@ -323,8 +323,8 @@ func _execute_node(exec_node: GraphNode) -> void:
 			var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
 			if target and target.has_method("set_text"):
 				match conn.to_port:
-					1: target.set_text(stdout_text + "\n" + target.text_buffer)
-					2: target.set_text(target.text_buffer + "\n" + stdout_text)
+					1: target.set_text(stdout_text + target.text_buffer)
+					2: target.set_text(target.text_buffer + stdout_text)
 					_: target.set_text(stdout_text)
 
 	if stderr_text != "":
@@ -333,8 +333,8 @@ func _execute_node(exec_node: GraphNode) -> void:
 				var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
 				if target and target.has_method("set_text"):
 					match conn.to_port:
-						1: target.set_text(stderr_text + "\n" + target.text_buffer)
-						2: target.set_text(target.text_buffer + "\n" + stderr_text)
+						1: target.set_text(stderr_text + target.text_buffer)
+						2: target.set_text(target.text_buffer + stderr_text)
 						_: target.set_text(stderr_text)
 
 
@@ -410,8 +410,8 @@ func _propagate_text(source: GraphNode) -> void:
 				target.set_input(conn.to_port, out_text)
 			elif target and target.has_method("set_text") and out_text != "":
 				match conn.to_port:
-					1: target.set_text(out_text + "\n" + target.text_buffer)
-					2: target.set_text(target.text_buffer + "\n" + out_text)
+					1: target.set_text(out_text + target.text_buffer)
+					2: target.set_text(target.text_buffer + out_text)
 					_: target.set_text(out_text)
 			elif target and not target.has_method("set_text") and conn.to_port == 2:
 				_execute_node(target)
