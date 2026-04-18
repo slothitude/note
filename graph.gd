@@ -306,6 +306,7 @@ func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
 	if t == "notepad":
 		node_data["text"] = child.text_buffer
 		node_data["file_path"] = child.file_path
+		node_data["enabled"] = child.enabled
 	elif t == "pc":
 		node_data["counter"] = child.counter
 		node_data["max_val"] = int(child.max_spin.value)
@@ -615,6 +616,8 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.set_text(node_data.text)
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.set_file(node_data.file_path)
+			if node_data.has("enabled"):
+				node.enabled = node_data.enabled
 		elif node_data.type == "pc":
 			node = PCNodeScene.instantiate()
 			node.name = node_data.name

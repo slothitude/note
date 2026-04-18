@@ -10,7 +10,7 @@ Dual-mode interface: write text in the editor, or switch to the graph to build a
 
 - Borderless, keyboard-driven text editor
 - Visual node graph with data propagation chains
-- 8 node types: Notepad, Execute, Find File, Bool, Program Counter, Sub-Graph, Graph Input, Graph Output
+- 8 node types: Notepad, Execute, Find File, Bool, Program Counter, Timer, Sub-Graph, Graph Input, Graph Output
 - Nested sub-graphs (graphs inside graphs)
 - Save/open graphs as JSON
 - Native OS file dialogs (.md, .py, .txt)
@@ -41,6 +41,7 @@ Holds text. Has an Open button to edit in the text editor.
 | 0 | Input | White | Replace content |
 | 1 | Input | Cyan | Prepend (incoming + existing) |
 | 2 | Input | Green | Append (existing + incoming) |
+| 3 | Input | Yellow | Enable — any non-"false" value keeps the node active |
 | 0 | Output | White | Emits text_buffer |
 
 - Linked files show filename as title
@@ -100,6 +101,20 @@ Boolean logic with AND, OR, NOT modes.
 - Max count adjustable via SpinBox (1-6)
 - Active output highlighted in green, inactive in gray
 - Jump accepts integers and floats (modulo max)
+
+### Timer
+Delays output by an interval. Two modes: One-shot and Countdown.
+
+| Port | Side | Color | Description |
+|---|---|---|---|
+| 0 | Input | Cyan | Prompt — text to output when timer fires |
+| 1 | Input | Cyan | Start — any data starts the timer |
+| 2 | Input | Cyan | Interval — seconds as a number |
+| 3 | Output | Green | Outputs the prompt text |
+
+- **One-shot** — fires once after the interval, then stops
+- **Countdown** — ticks silently N times, outputs the prompt once when it reaches zero
+- Countdown count set via SpinBox on the node
 
 ### Sub-Graph
 Contains an entire graph inside a single node. Click Edit to enter.

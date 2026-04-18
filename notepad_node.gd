@@ -6,6 +6,7 @@ signal text_updated
 
 var text_buffer: String = ""
 var file_path: String = ""
+var enabled: bool = true
 
 @onready var preview: Label = $Preview
 
@@ -15,6 +16,7 @@ func _ready() -> void:
 	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(2, true, 0, Color.GREEN, false, 0, Color.WHITE)
+	set_slot(3, true, 0, Color.YELLOW, false, 0, Color.WHITE)
 
 
 func set_file(path: String) -> void:
@@ -27,9 +29,23 @@ func _update_title() -> void:
 
 
 func set_text(text: String) -> void:
+	if not enabled:
+		return
 	text_buffer = text
 	_update_preview()
 	text_updated.emit()
+
+
+func set_input(port: int, text: String) -> void:
+	if port == 3:
+		enabled = text.strip_edges().to_lower() != "false" and text.strip_edges() != ""
+		return
+	if not enabled:
+		return
+	match port:
+		0: set_text(text)
+		1: set_text(text + text_buffer)
+		2: set_text(text_buffer + text)
 
 
 func _update_preview() -> void:
