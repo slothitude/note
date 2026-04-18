@@ -6,7 +6,7 @@ const NotepadNodeScene := preload("res://notepad_node.tscn")
 const ExecNodeScene := preload("res://exec_node.tscn")
 
 var _node_counter := 0
-var _propagating := false
+var _visited: Array[StringName] = []
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -204,9 +204,9 @@ func _on_delete_action(action: StringName) -> void:
 
 
 func _propagate_text(source: GraphNode) -> void:
-	if _propagating:
+	if source.name in _visited:
 		return
-	_propagating = true
+	_visited.append(source.name)
 	var connections := graph_edit.get_connection_list()
 	for conn in connections:
 		if conn.from_node == source.name and conn.from_port == 0:
@@ -216,7 +216,7 @@ func _propagate_text(source: GraphNode) -> void:
 					1: target.set_text(source.text_buffer + "\n" + target.text_buffer)
 					2: target.set_text(target.text_buffer + "\n" + source.text_buffer)
 					_: target.set_text(source.text_buffer)
-	_propagating = false
+	_visited.erase(source.name)
 
 
 func _on_notepad_open(node: GraphNode) -> void:
