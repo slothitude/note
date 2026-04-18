@@ -10,6 +10,7 @@ func _ready() -> void:
 	title = "Execute"
 	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
 	set_slot(1, false, 0, Color.WHITE, true, 0, Color.RED)
+	set_slot(2, true, 0, Color.YELLOW, false, 0, Color.WHITE)
 	print("ExecNode _ready called: ", name)
 
 

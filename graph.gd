@@ -216,6 +216,8 @@ func _propagate_text(source: GraphNode) -> void:
 					1: target.set_text(source.text_buffer + "\n" + target.text_buffer)
 					2: target.set_text(target.text_buffer + "\n" + source.text_buffer)
 					_: target.set_text(source.text_buffer)
+			elif target and not target.has_method("set_text") and conn.to_port == 2:
+				_execute_node(target)
 	_visited.erase(source.name)
 
 
