@@ -30,6 +30,8 @@ func _ready() -> void:
 	_setup_style()
 	_connect_signals()
 	_update_title()
+	_load_temp()
+	text_edit.grab_focus()
 	_switch_view("edit")
 
 
@@ -235,14 +237,10 @@ func _write_file(path: String) -> void:
 
 
 func _auto_save_and_quit() -> void:
+	_save_temp()
 	if current_file_path != "" and unsaved:
 		_write_file(current_file_path)
-		get_tree().quit()
-	elif current_file_path == "" and text_edit.text != "":
-		_pending_action = "save_quit"
-		save_dialog.popup_centered(Vector2i(600, 400))
-	else:
-		get_tree().quit()
+	get_tree().quit()
 
 
 func _load_temp() -> void:

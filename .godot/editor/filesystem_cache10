@@ -1,11 +1,12 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1776496662
+::res://::1776497357
 black_boxicon.png::CompressedTexture2D::2238845798466830260::1776492253::1776492265::1::::<><><>0<>0<>fd8895fcf53bfea4c4097bc6c6900e19<>res://.godot/imported/black_boxicon.png-b897f95dcb0121b234ce75141372c392.ctex::
 definition.md::TextFile::-1::1776475500::0::1::::<><><>0<>0<><>::
 edges-graph.md::TextFile::-1::1776476745::0::1::::<><><>0<>0<><>::
 edges.md::TextFile::-1::1776475406::0::1::::<><><>0<>0<><>::
 exec_node.gd::GDScript::5114789562176260801::1776489968::0::1::::<>GraphNode<><>0<>0<><>::
 exec_node.tscn::PackedScene::-1::1776493964::0::1::::<><><>0<>0<><>::res://exec_node.gd<>res://black_boxicon.png
+export_presets.cfg::TextFile::-1::1776497140::0::1::::<><><>0<>0<><>::
 graph.gd::GDScript::1591176490367952022::1776494701::0::1::::<>VBoxContainer<><>0<>0<><>::
 graph.tscn::PackedScene::1786932592487744813::1776492493::0::1::::<><><>0<>0<><>::uid://ww1pdvwiflra::::res://graph.gd
 graph_note.tscn::PackedScene::1046791298396044629::1776492086::0::1::::<><><>0<>0<><>::uid://1xnr42vu01uw::::res://notepad_icon.png
@@ -13,7 +14,7 @@ icon.png::CompressedTexture2D::3438037290740468688::1776478385::1776489648::1:::
 main.tscn::PackedScene::73267480864::1776487270::0::1::::<><><>0<>0<><>::res://note.gd<>res://graph.tscn
 monk.md::TextFile::-1::1776472556::0::1::::<><><>0<>0<><>::
 monkey.md::TextFile::-1::1776494334::0::1::::<><><>0<>0<><>::
-note.gd::GDScript::4162617641187522144::1776495064::0::1::::<>Control<><>0<>0<><>::
+note.gd::GDScript::4162617641187522144::1776497305::0::1::::<>Control<><>0<>0<><>::
 notepad_icon.png::CompressedTexture2D::1873211868203321486::1776491274::1776491489::1::::<><><>0<>0<>2072c33b4d495cfd35d96138f68f64e6<>res://.godot/imported/notepad_icon.png-c5675c7fb9b1d5864d63b4ff34dd2f15.ctex::
 notepad_node.gd::GDScript::1885633481450663741::1776478072::0::1::::<>GraphNode<><>0<>0<><>::
 notepad_node.tscn::PackedScene::-1::1776492680::0::1::::<><><>0<>0<><>::res://notepad_node.gd<>res://notepad_icon.png
@@ -23,3 +24,4 @@ stuff.md::TextFile::-1::1776478113::0::1::::<><><>0<>0<><>::
 test.md::TextFile::-1::1776489305::0::1::::<><><>0<>0<><>::
 todo-graph.md::TextFile::-1::1776476803::0::1::::<><><>0<>0<><>::
 todo.md::TextFile::-1::1776475349::0::1::::<><><>0<>0<><>::
+::res://windows/::1776497139
