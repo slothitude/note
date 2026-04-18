@@ -233,6 +233,8 @@ func _write_file(path: String) -> void:
 	f.close()
 	current_file_path = path
 	unsaved = false
+	if _selected_notepad and _selected_notepad.has_method("set_file"):
+		_selected_notepad.set_file(path)
 	_update_title()
 
 
