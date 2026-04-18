@@ -160,6 +160,7 @@ func save_graph() -> void:
 			}
 			if child.has_method("set_text"):
 				node_data["text"] = child.text_buffer
+				node_data["file_path"] = child.file_path
 			data.nodes.append(node_data)
 	for conn in graph_edit.get_connection_list():
 		data.connections.append({
@@ -196,6 +197,8 @@ func load_graph() -> void:
 			graph_edit.add_child(node)
 			if node_data.has("text"):
 				node.set_text(node_data.text)
+			if node_data.has("file_path") and node_data.file_path != "":
+				node.set_file(node_data.file_path)
 		else:
 			node = ExecNodeScene.instantiate()
 			node.name = node_data.name

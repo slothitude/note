@@ -3,14 +3,23 @@ extends GraphNode
 signal open_pressed(node: GraphNode)
 
 var text_buffer: String = ""
+var file_path: String = ""
 
 @onready var preview: Label = $Preview
 
 
 func _ready() -> void:
-	title = "Notepad"
-	# Slot 0: input on left, output on right
+	_update_title()
 	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
+
+
+func set_file(path: String) -> void:
+	file_path = path
+	_update_title()
+
+
+func _update_title() -> void:
+	title = file_path.get_file() if file_path != "" else "Notepad"
 
 
 func set_text(text: String) -> void:
