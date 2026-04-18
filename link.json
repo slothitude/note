@@ -1,0 +1,24 @@
+{
+	"connections": [
+		{
+			"from_node": "GInput0",
+			"from_port": 0,
+			"to_node": "GOutput1",
+			"to_port": 0
+		}
+	],
+	"nodes": [
+		{
+			"name": "GInput0",
+			"type": "graph_input",
+			"x": 80.0,
+			"y": 130.0
+		},
+		{
+			"name": "GOutput1",
+			"type": "graph_output",
+			"x": 560.0,
+			"y": 160.0
+		}
+	]
+}
