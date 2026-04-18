@@ -33,6 +33,21 @@ text = "+ Bool"
 layout_mode = 2
 text = "+ PC"
 
+[node name="Sep" type="VSeparator" parent="Toolbar"]
+layout_mode = 2
+
+[node name="NewBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "New"
+
+[node name="OpenBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Open"
+
+[node name="SaveBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Save"
+
 [node name="Spacer" type="Control" parent="Toolbar" unique_id=578789044]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -48,3 +63,6 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/AddFindFile" to="." method="add_find_file_node"]
 [connection signal="pressed" from="Toolbar/AddBool" to="." method="add_bool_node"]
 [connection signal="pressed" from="Toolbar/AddPC" to="." method="add_pc_node"]
+[connection signal="pressed" from="Toolbar/NewBtn" to="." method="_on_new_graph"]
+[connection signal="pressed" from="Toolbar/OpenBtn" to="." method="_on_open_graph"]
+[connection signal="pressed" from="Toolbar/SaveBtn" to="." method="_on_save_graph"]

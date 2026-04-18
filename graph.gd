@@ -10,6 +10,7 @@ const PCNodeScene := preload("res://pc_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
+var graph_file_path: String = ""
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -286,7 +287,67 @@ func _on_notepad_open(node: GraphNode) -> void:
 const SAVE_PATH := "user://graph.json"
 
 
-func save_graph() -> void:
+func _on_new_graph() -> void:
+	_clear_all_nodes()
+	graph_file_path = ""
+	_node_counter = 0
+
+
+func _clear_all_nodes() -> void:
+	for conn in graph_edit.get_connection_list():
+		graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+	var to_remove: Array[Node] = []
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			to_remove.append(child)
+	for child in to_remove:
+		child.queue_free()
+
+
+func _on_open_graph() -> void:
+	var dialog := FileDialog.new()
+	dialog.use_native_dialog = true
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.filters = PackedStringArray(["*.json"])
+	dialog.file_selected.connect(_on_graph_file_opened)
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_graph_file_opened(path: String) -> void:
+	graph_file_path = path
+	_clear_all_nodes()
+	_node_counter = 0
+	_load_from_file(path)
+
+
+func _on_save_graph() -> void:
+	if graph_file_path == "":
+		_on_save_graph_as()
+	else:
+		_save_to_file(graph_file_path)
+
+
+func _on_save_graph_as() -> void:
+	var dialog := FileDialog.new()
+	dialog.use_native_dialog = true
+	dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.filters = PackedStringArray(["*.json"])
+	dialog.file_selected.connect(_on_graph_file_saved)
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_graph_file_saved(path: String) -> void:
+	graph_file_path = path
+	_save_to_file(path)
+
+
+func _save_to_file(path: String) -> void:
 	var data := {"nodes": [], "connections": []}
 	for child in graph_edit.get_children():
 		if child is GraphNode:
@@ -295,7 +356,7 @@ func save_graph() -> void:
 				node_type = "notepad"
 			elif child.has_method("get_port_output"):
 				node_type = "pc"
-			elif child.has_method("set_input"):
+			elif child.has_method("set_input") and not child.has_method("get_port_output"):
 				node_type = "bool"
 			elif child.get("file_path") != null and not child.has_signal("open_pressed"):
 				node_type = "find_file"
@@ -310,7 +371,7 @@ func save_graph() -> void:
 				node_data["file_path"] = child.file_path
 			elif child.has_method("get_port_output"):
 				node_data["counter"] = child.counter
-			elif child.has_method("set_input"):
+			elif child.has_method("set_input") and not child.has_method("get_port_output"):
 				node_data["input_a"] = child.input_a
 				node_data["input_b"] = child.input_b
 			elif child.get("file_path") != null:
@@ -323,16 +384,14 @@ func save_graph() -> void:
 			"to_node": String(conn.to_node),
 			"to_port": conn.to_port,
 		})
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data, "\t"))
 		f.close()
 
 
-func load_graph() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+func _load_from_file(path: String) -> void:
+	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
 		return
 	var json := JSON.new()
@@ -341,6 +400,20 @@ func load_graph() -> void:
 		return
 	f.close()
 	var data: Dictionary = json.data
+	_build_nodes_from_data(data)
+
+
+func save_graph() -> void:
+	_save_to_file(SAVE_PATH)
+
+
+func load_graph() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	_load_from_file(SAVE_PATH)
+
+
+func _build_nodes_from_data(data: Dictionary) -> void:
 	for node_data in data.nodes:
 		var node: GraphNode
 		if node_data.type == "notepad":
