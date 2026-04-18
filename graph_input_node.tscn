@@ -1,30 +1,48 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://dhr8scsytjlrx"]
 
-[ext_resource type="Script" path="res://graph_input_node.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://black_boxicon.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://bifxjo1qo1lbr" path="res://fractal.png" id="1_1hvfv"]
+[ext_resource type="Script" uid="uid://ci6nb67bqw42x" path="res://graph_input_node.gd" id="1_script"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
-texture = ExtResource("2_icon")
+texture = ExtResource("1_1hvfv")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_titlebar"]
 bg_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 
-[node name="GraphInputNode" type="GraphNode"]
-offset_position = Vector2(0, 0)
-size = Vector2(200, 100)
-custom_minimum_size = Vector2(200, 100)
-title = "Input"
+[node name="GraphInputNode" type="GraphNode" unique_id=819528276]
+custom_minimum_size = Vector2(300, 300)
+offset_right = 200.0
+offset_bottom = 100.0
 theme_override_styles/panel = SubResource("StyleBoxTexture_panel")
 theme_override_styles/titlebar = SubResource("StyleBoxFlat_titlebar")
+title = "Input"
+slot/0/left_enabled = false
+slot/0/left_type = 0
+slot/0/left_color = Color(1, 1, 1, 1)
+slot/0/left_icon = null
+slot/0/right_enabled = false
+slot/0/right_type = 0
+slot/0/right_color = Color(1, 1, 1, 1)
+slot/0/right_icon = null
+slot/0/draw_stylebox = true
+slot/1/left_enabled = false
+slot/1/left_type = 0
+slot/1/left_color = Color(1, 1, 1, 1)
+slot/1/left_icon = null
+slot/1/right_enabled = false
+slot/1/right_type = 0
+slot/1/right_color = Color(1, 1, 1, 1)
+slot/1/right_icon = null
+slot/1/draw_stylebox = true
 script = ExtResource("1_script")
 
-[node name="Label" type="Label" parent="."]
+[node name="Label" type="Label" parent="." unique_id=1941131042]
 layout_mode = 2
 text = "→ out"
 
-[node name="DeleteButton" type="Button" parent="."]
+[node name="DeleteButton" type="Button" parent="." unique_id=227220183]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Delete"
