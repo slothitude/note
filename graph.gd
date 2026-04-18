@@ -204,7 +204,7 @@ func _on_exit_subgraph() -> void:
 	_current_subgraph.internal_data = _serialize_current_graph()
 	_current_subgraph._rebuild_ports()
 	# Pop parent state
-	var parent := _graph_stack.pop_back()
+	var parent: Dictionary = _graph_stack.pop_back()
 	_current_subgraph = parent["subgraph"]
 	_clear_all_nodes()
 	_node_counter = 0
