@@ -214,10 +214,10 @@ func _on_delete_action(action: StringName) -> void:
 
 
 func _get_output_text(source: GraphNode, from_port: int) -> String:
-	if source.get("file_path") != null and from_port == 1:
-		return str(source.get("file_path"))
 	if source.get("text_buffer") != null:
 		return str(source.get("text_buffer"))
+	if source.get("file_path") != null:
+		return str(source.get("file_path"))
 	return ""
 
 
