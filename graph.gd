@@ -145,9 +145,49 @@ func _execute_node(exec_node: GraphNode) -> void:
 					target.set_text(stderr_text)
 
 
+var _pending_delete_node: GraphNode = null
+var _delete_dialog: AcceptDialog = null
+
+
 func _on_node_delete(node: GraphNode) -> void:
+	if node.has_method("set_text") and node.file_path == "":
+		# Unsaved notepad — ask save or delete
+		_pending_delete_node = node
+		if _delete_dialog == null:
+			_delete_dialog = AcceptDialog.new()
+			_delete_dialog.title = "Unsaved Notepad"
+			_delete_dialog.dialog_text = "Save or delete?"
+			_delete_dialog.ok_button_text = "Delete"
+			_delete_dialog.add_button("Save", false, "save")
+			_delete_dialog.confirmed.connect(_confirm_delete)
+			_delete_dialog.custom_action.connect(_on_delete_action)
+			add_child(_delete_dialog)
+		_delete_dialog.popup_centered()
+	else:
+		_do_delete(node)
+
+
+func _do_delete(node: GraphNode) -> void:
+	if node.has_method("set_text") and node.file_path != "":
+		var f := FileAccess.open(node.file_path, FileAccess.WRITE)
+		if f:
+			f.store_string(node.text_buffer)
+			f.close()
 	_clear_connections_for(node.name)
 	node.queue_free()
+
+
+func _confirm_delete() -> void:
+	if _pending_delete_node:
+		_do_delete(_pending_delete_node)
+		_pending_delete_node = null
+
+
+func _on_delete_action(action: StringName) -> void:
+	if action == &"save" and _pending_delete_node:
+		notepad_selected.emit(_pending_delete_node)
+		_pending_delete_node = null
+	_delete_dialog.hide()
 
 
 func _on_notepad_open(node: GraphNode) -> void:
