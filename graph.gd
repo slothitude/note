@@ -10,6 +10,7 @@ const PCNodeScene := preload("res://pc_node.tscn")
 const SubGraphNodeScene := preload("res://sub_graph_node.tscn")
 const GraphInputNodeScene := preload("res://graph_input_node.tscn")
 const GraphOutputNodeScene := preload("res://graph_output_node.tscn")
+const TimerNodeScene := preload("res://timer_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
@@ -155,6 +156,16 @@ func add_pc_node() -> void:
 	graph_edit.add_child(node)
 
 
+func add_timer_node() -> void:
+	var node := TimerNodeScene.instantiate()
+	node.name = "Timer%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
 func add_sub_graph_node() -> void:
 	var node := SubGraphNodeScene.instantiate()
 	node.name = "SubGraph%d" % _node_counter
@@ -277,6 +288,8 @@ func _get_node_type(child: Node) -> String:
 		return "notepad"
 	if child.has_method("get_port_output"):
 		return "pc"
+	if child.get("interval_secs") != null and child.has_method("set_input"):
+		return "timer"
 	if child.has_method("set_input") and not child.has_method("get_port_output"):
 		return "bool"
 	if child.get("file_path") != null and not child.has_signal("open_pressed") and not child.has_signal("edit_pressed"):
@@ -300,6 +313,11 @@ func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
 		node_data["input_a"] = child.input_a
 		node_data["input_b"] = child.input_b
 		node_data["mode"] = child.mode_option.selected
+	elif t == "timer":
+		node_data["prompt_text"] = child.prompt_text
+		node_data["interval_secs"] = child.interval_secs
+		node_data["mode"] = child.mode_option.selected
+		node_data["count"] = int(child.count_spin.value)
 	elif t == "find_file":
 		node_data["file_path"] = child.file_path
 	elif t == "subgraph":
@@ -461,7 +479,7 @@ func _propagate_text(source: GraphNode) -> void:
 					1: target.set_text(out_text + target.text_buffer)
 					2: target.set_text(target.text_buffer + out_text)
 					_: target.set_text(out_text)
-			elif target and not target.has_method("set_text") and conn.to_port == 2:
+			elif target and not target.has_method("set_text") and conn.to_port == 1:
 				_execute_node(target)
 	_visited.erase(source.name)
 
@@ -625,6 +643,24 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("mode"):
 				node.mode_option.selected = int(node_data.mode)
 			node.call("_evaluate")
+		elif node_data.type == "timer":
+			node = TimerNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
+			if node_data.has("prompt_text"):
+				node.prompt_text = node_data.prompt_text
+				node.output_value = node_data.prompt_text
+			if node_data.has("interval_secs"):
+				node.interval_secs = float(node_data.interval_secs)
+			if node_data.has("mode"):
+				node.mode_option.selected = int(node_data.mode)
+			if node_data.has("count"):
+				node.count_spin.value = int(node_data.count)
+			node.call("_update_status")
 		elif node_data.type == "find_file":
 			node = FindFileNodeScene.instantiate()
 			node.name = node_data.name
