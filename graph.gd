@@ -331,18 +331,18 @@ func load_graph() -> void:
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.set_file(node_data.file_path)
 		elif node_data.type == "bool":
-		node = BoolNodeScene.instantiate()
-		node.name = node_data.name
-		node.position_offset = Vector2(node_data.x, node_data.y)
-		node.delete_pressed.connect(_on_node_delete)
-		node.text_updated.connect(_propagate_text.bind(node))
-		graph_edit.add_child(node)
-		if node_data.has("input_a"):
-			node.input_a = node_data.input_a
-		if node_data.has("input_b"):
-			node.input_b = node_data.input_b
-		node.call("_evaluate")
-	elif node_data.type == "find_file":
+			node = BoolNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.delete_pressed.connect(_on_node_delete)
+			node.text_updated.connect(_propagate_text.bind(node))
+			graph_edit.add_child(node)
+			if node_data.has("input_a"):
+				node.input_a = node_data.input_a
+			if node_data.has("input_b"):
+				node.input_b = node_data.input_b
+			node.call("_evaluate")
+		elif node_data.type == "find_file":
 			node = FindFileNodeScene.instantiate()
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
