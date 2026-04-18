@@ -238,6 +238,7 @@ func _write_file(path: String) -> void:
 
 func _auto_save_and_quit() -> void:
 	_save_temp()
+	graph_view.save_graph()
 	if current_file_path != "" and unsaved:
 		_write_file(current_file_path)
 	get_tree().quit()
