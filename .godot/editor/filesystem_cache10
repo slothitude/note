@@ -1,6 +1,7 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1776510663
+::res://::1776511791
 black_boxicon.png::CompressedTexture2D::2238845798466830260::1776492253::1776492265::1::::<><><>0<>0<>fd8895fcf53bfea4c4097bc6c6900e19<>res://.godot/imported/black_boxicon.png-b897f95dcb0121b234ce75141372c392.ctex::
+booliean.png::CompressedTexture2D::9211221071922818645::1776510982::1776511007::1::::<><><>0<>0<>114b14516889eff7457fcc16663f005a<>res://.godot/imported/booliean.png-c858c397e2b8e1aac7d3cdb10ef995ef.ctex::
 bool_node.gd::GDScript::1579785781195343351::1776509953::0::1::::<>GraphNode<><>0<>0<><>::
 bool_node.tscn::PackedScene::-1::1776509978::0::1::::<><><>0<>0<><>::res://bool_node.gd<>res://black_boxicon.png
 definition.md::TextFile::-1::1776475500::0::1::::<><><>0<>0<><>::
@@ -26,7 +27,7 @@ notepad_node.gd::GDScript::1885633481450663741::1776504771::0::1::::<>GraphNode<
 notepad_node.tscn::PackedScene::-1::1776504275::0::1::::<><><>0<>0<><>::res://notepad_node.gd<>res://notepad_icon.png
 pc_icon.png::CompressedTexture2D::5380043957240607770::1776510642::1776510663::1::::<><><>0<>0<>14d7ee09951b4beeed7cd37cf90e458b<>res://.godot/imported/pc_icon.png-1b41633b462e551bd0008a623c317334.ctex::
 pc_node.gd::GDScript::953381593866224143::1776509994::0::1::::<>GraphNode<><>0<>0<><>::
-pc_node.tscn::PackedScene::-1::1776509318::0::1::::<><><>0<>0<><>::res://pc_node.gd<>res://black_boxicon.png
+pc_node.tscn::PackedScene::-1::1776510726::0::1::::<><><>0<>0<><>::res://pc_node.gd<>res://pc_icon.png
 plan-graph.md::TextFile::-1::1776476788::0::1::::<><><>0<>0<><>::
 plan.md::TextFile::-1::1776471988::0::1::::<><><>0<>0<><>::
 stuff.md::TextFile::-1::1776478113::0::1::::<><><>0<>0<><>::
