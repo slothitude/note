@@ -7,10 +7,15 @@ const ExecNodeScene := preload("res://exec_node.tscn")
 const FindFileNodeScene := preload("res://find_file_node.tscn")
 const BoolNodeScene := preload("res://bool_node.tscn")
 const PCNodeScene := preload("res://pc_node.tscn")
+const SubGraphNodeScene := preload("res://sub_graph_node.tscn")
+const GraphInputNodeScene := preload("res://graph_input_node.tscn")
+const GraphOutputNodeScene := preload("res://graph_output_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
 var graph_file_path: String = ""
+var _graph_stack: Array = []
+var _current_subgraph: GraphNode = null
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -148,6 +153,132 @@ func add_pc_node() -> void:
 	node.delete_pressed.connect(_on_node_delete)
 	node.text_updated.connect(_propagate_text.bind(node))
 	graph_edit.add_child(node)
+
+
+func add_sub_graph_node() -> void:
+	var node := SubGraphNodeScene.instantiate()
+	node.name = "SubGraph%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
+	node.edit_pressed.connect(_on_enter_subgraph)
+	node.delete_pressed.connect(_on_node_delete)
+	graph_edit.add_child(node)
+
+
+func add_graph_input_node() -> void:
+	var node := GraphInputNodeScene.instantiate()
+	node.name = "GInput%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = Vector2(50 + (_node_counter * 30), 100 + (_node_counter * 30))
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
+func add_graph_output_node() -> void:
+	var node := GraphOutputNodeScene.instantiate()
+	node.name = "GOutput%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = Vector2(500 + (_node_counter * 30), 100 + (_node_counter * 30))
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
+func _on_enter_subgraph(sub_graph_node: GraphNode) -> void:
+	# Save current graph state
+	var parent_data := _serialize_current_graph()
+	_graph_stack.append({"data": parent_data, "subgraph": _current_subgraph})
+	_current_subgraph = sub_graph_node
+	# Clear and load sub-graph
+	_clear_all_nodes()
+	_node_counter = 0
+	_build_nodes_from_data(sub_graph_node.internal_data)
+	_show_subgraph_nav(true)
+
+
+func _on_exit_subgraph() -> void:
+	if _graph_stack.is_empty():
+		return
+	# Save current sub-graph back to the SubGraph node
+	_current_subgraph.internal_data = _serialize_current_graph()
+	_current_subgraph._rebuild_ports()
+	# Pop parent state
+	var parent := _graph_stack.pop_back()
+	_current_subgraph = parent["subgraph"]
+	_clear_all_nodes()
+	_node_counter = 0
+	_build_nodes_from_data(parent["data"])
+	_show_subgraph_nav(_graph_stack.size() > 0)
+
+
+func _show_subgraph_nav(show: bool) -> void:
+	var back_btn: Button = get_node_or_null("Toolbar/BackBtn")
+	if back_btn:
+		back_btn.visible = show
+	var add_input: Button = get_node_or_null("Toolbar/AddGInput")
+	var add_output: Button = get_node_or_null("Toolbar/AddGOutput")
+	if add_input:
+		add_input.visible = show
+	if add_output:
+		add_output.visible = show
+
+
+func _get_node_type(child: Node) -> String:
+	if child.has_signal("edit_pressed"):
+		return "subgraph"
+	if child.has_signal("open_pressed"):
+		return "notepad"
+	if child.has_method("get_port_output"):
+		return "pc"
+	if child.has_method("set_input") and not child.has_method("get_port_output"):
+		return "bool"
+	if child.get("file_path") != null and not child.has_signal("open_pressed") and not child.has_signal("edit_pressed"):
+		return "find_file"
+	if child.has_signal("text_updated") and child.title == "Input":
+		return "graph_input"
+	if child.has_signal("text_updated") and child.title == "Output":
+		return "graph_output"
+	return "exec"
+
+
+func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
+	var t: String = node_data.type
+	if t == "notepad":
+		node_data["text"] = child.text_buffer
+		node_data["file_path"] = child.file_path
+	elif t == "pc":
+		node_data["counter"] = child.counter
+	elif t == "bool":
+		node_data["input_a"] = child.input_a
+		node_data["input_b"] = child.input_b
+	elif t == "find_file":
+		node_data["file_path"] = child.file_path
+	elif t == "subgraph":
+		node_data["internal"] = child.internal_data
+
+
+func _serialize_current_graph() -> Dictionary:
+	var data := {"nodes": [], "connections": []}
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			var node_type := _get_node_type(child)
+			var node_data := {
+				"name": child.name,
+				"type": node_type,
+				"x": child.position_offset.x,
+				"y": child.position_offset.y,
+			}
+			_serialize_node_data(child, node_data)
+			data.nodes.append(node_data)
+	for conn in graph_edit.get_connection_list():
+		data.connections.append({
+			"from_node": String(conn.from_node),
+			"from_port": conn.from_port,
+			"to_node": String(conn.to_node),
+			"to_port": conn.to_port,
+		})
+	return data
 
 
 func _on_node_run(exec_node: GraphNode) -> void:
@@ -348,35 +479,11 @@ func _on_graph_file_saved(path: String) -> void:
 
 
 func _save_to_file(path: String) -> void:
-	var data := {"nodes": [], "connections": []}
-	for child in graph_edit.get_children():
-		if child is GraphNode:
-			var node_type := "exec"
-			if child.has_signal("open_pressed"):
-				node_type = "notepad"
-			elif child.has_method("get_port_output"):
-				node_type = "pc"
-			elif child.has_method("set_input") and not child.has_method("get_port_output"):
-				node_type = "bool"
-			elif child.get("file_path") != null and not child.has_signal("open_pressed"):
-				node_type = "find_file"
-			var node_data := {
-				"name": child.name,
-				"type": node_type,
-				"x": child.position_offset.x,
-				"y": child.position_offset.y,
-			}
-			if child.has_signal("open_pressed"):
-				node_data["text"] = child.text_buffer
-				node_data["file_path"] = child.file_path
-			elif child.has_method("get_port_output"):
-				node_data["counter"] = child.counter
-			elif child.has_method("set_input") and not child.has_method("get_port_output"):
-				node_data["input_a"] = child.input_a
-				node_data["input_b"] = child.input_b
-			elif child.get("file_path") != null:
-				node_data["file_path"] = child.file_path
-			data.nodes.append(node_data)
+	var data := _serialize_current_graph()
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(data, "\t"))
+		f.close()
 	for conn in graph_edit.get_connection_list():
 		data.connections.append({
 			"from_node": String(conn.from_node),
@@ -460,6 +567,30 @@ func _build_nodes_from_data(data: Dictionary) -> void:
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.file_path = node_data.file_path
 				node.result.text = node_data.file_path
+		elif node_data.type == "subgraph":
+			node = SubGraphNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.edit_pressed.connect(_on_enter_subgraph)
+			node.delete_pressed.connect(_on_node_delete)
+			graph_edit.add_child(node)
+			if node_data.has("internal"):
+				node.internal_data = node_data.internal
+				node.call("_rebuild_ports")
+		elif node_data.type == "graph_input":
+			node = GraphInputNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.delete_pressed.connect(_on_node_delete)
+			node.text_updated.connect(_propagate_text.bind(node))
+			graph_edit.add_child(node)
+		elif node_data.type == "graph_output":
+			node = GraphOutputNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.delete_pressed.connect(_on_node_delete)
+			node.text_updated.connect(_propagate_text.bind(node))
+			graph_edit.add_child(node)
 		else:
 			node = ExecNodeScene.instantiate()
 			node.name = node_data.name
