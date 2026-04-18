@@ -33,6 +33,25 @@ text = "+ Bool"
 layout_mode = 2
 text = "+ PC"
 
+[node name="AddSubGraph" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+ Graph"
+
+[node name="AddGInput" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+ In"
+visible = false
+
+[node name="AddGOutput" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+ Out"
+visible = false
+
+[node name="BackBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "← Back"
+visible = false
+
 [node name="Sep" type="VSeparator" parent="Toolbar"]
 layout_mode = 2
 
@@ -63,6 +82,10 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/AddFindFile" to="." method="add_find_file_node"]
 [connection signal="pressed" from="Toolbar/AddBool" to="." method="add_bool_node"]
 [connection signal="pressed" from="Toolbar/AddPC" to="." method="add_pc_node"]
+[connection signal="pressed" from="Toolbar/AddSubGraph" to="." method="add_sub_graph_node"]
+[connection signal="pressed" from="Toolbar/AddGInput" to="." method="add_graph_input_node"]
+[connection signal="pressed" from="Toolbar/AddGOutput" to="." method="add_graph_output_node"]
+[connection signal="pressed" from="Toolbar/BackBtn" to="." method="_on_exit_subgraph"]
 [connection signal="pressed" from="Toolbar/NewBtn" to="." method="_on_new_graph"]
 [connection signal="pressed" from="Toolbar/OpenBtn" to="." method="_on_open_graph"]
 [connection signal="pressed" from="Toolbar/SaveBtn" to="." method="_on_save_graph"]
