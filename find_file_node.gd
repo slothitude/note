@@ -1,6 +1,7 @@
 extends GraphNode
 
 signal delete_pressed(node: GraphNode)
+signal text_updated
 
 var file_path: String = ""
 
@@ -21,6 +22,7 @@ func set_text(text: String) -> void:
 	var found := _search_for_file(fname)
 	file_path = found if found != "" else "false"
 	result.text = found if found != "" else "false"
+	text_updated.emit()
 
 
 func _search_for_file(fname: String) -> String:

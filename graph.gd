@@ -115,6 +115,7 @@ func add_find_file_node() -> void:
 	_node_counter += 1
 	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
 	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
 	graph_edit.add_child(node)
 
 
@@ -309,6 +310,7 @@ func load_graph() -> void:
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			node.delete_pressed.connect(_on_node_delete)
+			node.text_updated.connect(_propagate_text.bind(node))
 			graph_edit.add_child(node)
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.file_path = node_data.file_path
