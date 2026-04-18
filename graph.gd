@@ -507,7 +507,24 @@ func _load_from_file(path: String) -> void:
 
 
 func save_graph() -> void:
-	_save_to_file(SAVE_PATH)
+	if _graph_stack.is_empty():
+		_save_to_file(SAVE_PATH)
+		return
+	# Inside a subgraph — merge current state up to root, then save root
+	var current_data := _serialize_current_graph()
+	for i in range(_graph_stack.size() - 1, -1, -1):
+		var entry: Dictionary = _graph_stack[i]
+		var parent_data: Dictionary = entry["data"]
+		var sg_name: String = entry["subgraph_name"]
+		for n in parent_data.nodes:
+			if n.name == sg_name and n.has("internal"):
+				n.internal = current_data
+				break
+		current_data = parent_data
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(current_data, "\t"))
+		f.close()
 
 
 func load_graph() -> void:
