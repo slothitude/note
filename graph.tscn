@@ -41,6 +41,10 @@ text = "+ Timer"
 layout_mode = 2
 text = "+ Graph"
 
+[node name="AddBinary" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+ Binary"
+
 [node name="AddGInput" type="Button" parent="Toolbar"]
 layout_mode = 2
 text = "+ In"
@@ -88,6 +92,7 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/AddPC" to="." method="add_pc_node"]
 [connection signal="pressed" from="Toolbar/AddTimer" to="." method="add_timer_node"]
 [connection signal="pressed" from="Toolbar/AddSubGraph" to="." method="add_sub_graph_node"]
+[connection signal="pressed" from="Toolbar/AddBinary" to="." method="add_binary_node"]
 [connection signal="pressed" from="Toolbar/AddGInput" to="." method="add_graph_input_node"]
 [connection signal="pressed" from="Toolbar/AddGOutput" to="." method="add_graph_output_node"]
 [connection signal="pressed" from="Toolbar/BackBtn" to="." method="_on_exit_subgraph"]
