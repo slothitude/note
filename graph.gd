@@ -13,7 +13,10 @@ var _node_counter := 0
 func _ready() -> void:
 	_setup_style()
 	_connect_signals()
-	_add_default_notepad()
+	if FileAccess.file_exists(SAVE_PATH):
+		load_graph()
+	else:
+		_add_default_notepad()
 
 
 func _setup_style() -> void:
@@ -140,3 +143,68 @@ func _execute_node(exec_node: GraphNode) -> void:
 
 func _on_notepad_open(node: GraphNode) -> void:
 	notepad_selected.emit(node)
+
+
+const SAVE_PATH := "user://graph.json"
+
+
+func save_graph() -> void:
+	var data := {"nodes": [], "connections": []}
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			var node_data := {
+				"name": child.name,
+				"type": "notepad" if child.has_method("set_text") else "exec",
+				"x": child.position_offset.x,
+				"y": child.position_offset.y,
+			}
+			if child.has_method("set_text"):
+				node_data["text"] = child.text_buffer
+			data.nodes.append(node_data)
+	for conn in graph_edit.get_connection_list():
+		data.connections.append({
+			"from_node": String(conn.from_node),
+			"from_port": conn.from_port,
+			"to_node": String(conn.to_node),
+			"to_port": conn.to_port,
+		})
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(data, "\t"))
+		f.close()
+
+
+func load_graph() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var json := JSON.new()
+	if json.parse(f.get_as_text()) != OK:
+		f.close()
+		return
+	f.close()
+	var data := json.data
+	for node_data in data.nodes:
+		var node: GraphNode
+		if node_data.type == "notepad":
+			node = NotepadNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.open_pressed.connect(_on_notepad_open)
+			graph_edit.add_child(node)
+			if node_data.has("text"):
+				node.set_text(node_data.text)
+		else:
+			node = ExecNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.run_pressed.connect(_on_node_run)
+			graph_edit.add_child(node)
+		_node_counter = max(_node_counter, node_data.name.to_int() + 1)
+	for conn_data in data.connections:
+		graph_edit.connect_node(
+			StringName(conn_data.from_node), conn_data.from_port,
+			StringName(conn_data.to_node), conn_data.to_port
+		)
