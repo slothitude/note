@@ -25,6 +25,10 @@ text = "+ Execute"
 layout_mode = 2
 text = "+ Find File"
 
+[node name="AddBool" type="Button" parent="Toolbar" unique_id=578912055]
+layout_mode = 2
+text = "+ Bool"
+
 [node name="Spacer" type="Control" parent="Toolbar" unique_id=578789044]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -38,3 +42,4 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/AddNotepad" to="." method="add_notepad_node"]
 [connection signal="pressed" from="Toolbar/AddExec" to="." method="add_exec_node"]
 [connection signal="pressed" from="Toolbar/AddFindFile" to="." method="add_find_file_node"]
+[connection signal="pressed" from="Toolbar/AddBool" to="." method="add_bool_node"]

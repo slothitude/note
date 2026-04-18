@@ -5,6 +5,7 @@ signal notepad_selected(node: GraphNode)
 const NotepadNodeScene := preload("res://notepad_node.tscn")
 const ExecNodeScene := preload("res://exec_node.tscn")
 const FindFileNodeScene := preload("res://find_file_node.tscn")
+const BoolNodeScene := preload("res://bool_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
@@ -119,7 +120,14 @@ func add_find_file_node() -> void:
 	graph_edit.add_child(node)
 
 
-func _on_node_run(exec_node: GraphNode) -> void:
+func add_bool_node() -> void:
+	var node := BoolNodeScene.instantiate()
+	node.name = "Bool%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)(exec_node: GraphNode) -> void:
 	_execute_node(exec_node)
 
 
@@ -215,6 +223,8 @@ func _on_delete_action(action: StringName) -> void:
 
 
 func _get_output_text(source: GraphNode, from_port: int) -> String:
+	if source.get("output_value") != null:
+		return str(source.get("output_value"))
 	if source.get("text_buffer") != null:
 		return str(source.get("text_buffer"))
 	if source.get("file_path") != null:
@@ -233,7 +243,9 @@ func _propagate_text(source: GraphNode) -> void:
 			if out_text == "" and conn.from_port != 0:
 				continue
 			var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
-			if target and target.has_method("set_text") and out_text != "":
+			if target and target.has_method("set_input"):
+				target.set_input(conn.to_port, out_text)
+			elif target and target.has_method("set_text") and out_text != "":
 				match conn.to_port:
 					1: target.set_text(out_text + "\n" + target.text_buffer)
 					2: target.set_text(target.text_buffer + "\n" + out_text)
@@ -254,15 +266,25 @@ func save_graph() -> void:
 	var data := {"nodes": [], "connections": []}
 	for child in graph_edit.get_children():
 		if child is GraphNode:
+			var node_type := "exec"
+			if child.has_signal("open_pressed"):
+				node_type = "notepad"
+			elif child.has_method("set_input"):
+				node_type = "bool"
+			elif child.get("file_path") != null and not child.has_signal("open_pressed"):
+				node_type = "find_file"
 			var node_data := {
 				"name": child.name,
-				"type": "find_file" if child.get("file_path") != null and not child.has_signal("open_pressed") else ("notepad" if child.has_signal("open_pressed") else "exec"),
+				"type": node_type,
 				"x": child.position_offset.x,
 				"y": child.position_offset.y,
 			}
 			if child.has_signal("open_pressed"):
 				node_data["text"] = child.text_buffer
 				node_data["file_path"] = child.file_path
+			elif child.has_method("set_input"):
+				node_data["input_a"] = child.input_a
+				node_data["input_b"] = child.input_b
 			elif child.get("file_path") != null:
 				node_data["file_path"] = child.file_path
 			data.nodes.append(node_data)
@@ -305,7 +327,19 @@ func load_graph() -> void:
 				node.set_text(node_data.text)
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.set_file(node_data.file_path)
-		elif node_data.type == "find_file":
+		elif node_data.type == "bool":
+		node = BoolNodeScene.instantiate()
+		node.name = node_data.name
+		node.position_offset = Vector2(node_data.x, node_data.y)
+		node.delete_pressed.connect(_on_node_delete)
+		node.text_updated.connect(_propagate_text.bind(node))
+		graph_edit.add_child(node)
+		if node_data.has("input_a"):
+			node.input_a = node_data.input_a
+		if node_data.has("input_b"):
+			node.input_b = node_data.input_b
+		node._evaluate()
+	elif node_data.type == "find_file":
 			node = FindFileNodeScene.instantiate()
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
