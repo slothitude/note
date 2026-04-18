@@ -6,6 +6,7 @@ const NotepadNodeScene := preload("res://notepad_node.tscn")
 const ExecNodeScene := preload("res://exec_node.tscn")
 
 var _node_counter := 0
+var _propagating := false
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -62,6 +63,7 @@ func _add_default_notepad() -> void:
 	node.position_offset = Vector2(100 + (_node_counter * 20), 100 + (_node_counter * 20))
 	node.open_pressed.connect(_on_notepad_open)
 	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
 	graph_edit.add_child(node)
 	var temp_path := OS.get_temp_dir().path_join("note_untitled.tmp")
 	if FileAccess.file_exists(temp_path):
@@ -78,6 +80,7 @@ func add_default_notepad() -> void:
 	node.position_offset = Vector2(100 + (_node_counter * 20), 100 + (_node_counter * 20))
 	node.open_pressed.connect(_on_notepad_open)
 	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
 	graph_edit.add_child(node)
 
 
@@ -88,6 +91,7 @@ func add_notepad_node() -> void:
 	node.position_offset = Vector2(100 + (_node_counter * 30), 100 + (_node_counter * 30))
 	node.open_pressed.connect(_on_notepad_open)
 	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
 	graph_edit.add_child(node)
 
 
@@ -196,6 +200,22 @@ func _on_delete_action(action: StringName) -> void:
 	_delete_dialog.hide()
 
 
+func _propagate_text(source: GraphNode) -> void:
+	if _propagating:
+		return
+	_propagating = true
+	var connections := graph_edit.get_connection_list()
+	for conn in connections:
+		if conn.from_node == source.name and conn.from_port == 0:
+			var target := graph_edit.get_node_or_null(NodePath(conn.to_node))
+			if target and target.has_method("set_text"):
+				match conn.to_port:
+					1: target.set_text(source.text_buffer + "\n" + target.text_buffer)
+					2: target.set_text(target.text_buffer + "\n" + source.text_buffer)
+					_: target.set_text(source.text_buffer)
+	_propagating = false
+
+
 func _on_notepad_open(node: GraphNode) -> void:
 	notepad_selected.emit(node)
 
@@ -250,6 +270,7 @@ func load_graph() -> void:
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			node.open_pressed.connect(_on_notepad_open)
 			node.delete_pressed.connect(_on_node_delete)
+			node.text_updated.connect(_propagate_text.bind(node))
 			graph_edit.add_child(node)
 			if node_data.has("text"):
 				node.set_text(node_data.text)

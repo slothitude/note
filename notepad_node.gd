@@ -2,6 +2,7 @@ extends GraphNode
 
 signal open_pressed(node: GraphNode)
 signal delete_pressed(node: GraphNode)
+signal text_updated
 
 var text_buffer: String = ""
 var file_path: String = ""
@@ -28,6 +29,7 @@ func _update_title() -> void:
 func set_text(text: String) -> void:
 	text_buffer = text
 	_update_preview()
+	text_updated.emit()
 
 
 func _update_preview() -> void:
