@@ -33,6 +33,7 @@ func _connect_signals() -> void:
 	graph_edit.connection_request.connect(_on_connection_request)
 	graph_edit.disconnection_request.connect(_on_disconnection_request)
 	graph_edit.delete_nodes_request.connect(_on_delete_nodes)
+	graph_edit.gui_input.connect(_on_graph_input)
 
 
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
@@ -44,6 +45,13 @@ func _on_connection_request(from: StringName, from_port: int, to: StringName, to
 
 func _on_disconnection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from, from_port, to, to_port)
+
+
+func _on_graph_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		var conn: Dictionary = graph_edit.get_closest_connection_at_point(event.position, 10.0)
+		if not conn.is_empty():
+			graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
 
 
 func _on_delete_nodes(nodes: Array[StringName]) -> void:
