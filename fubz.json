@@ -1,0 +1,14 @@
+{
+	"connections": [],
+	"nodes": [
+		{
+			"enabled": true,
+			"file_path": "",
+			"name": "Notepad8",
+			"text": "claude -p hello fella",
+			"type": "notepad",
+			"x": 120.0,
+			"y": 60.0
+		}
+	]
+}
