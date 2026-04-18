@@ -191,7 +191,7 @@ func _on_enter_subgraph(sub_graph_node: GraphNode) -> void:
 	_graph_stack.append({"data": parent_data, "subgraph_name": _current_subgraph_name})
 	_current_subgraph_name = sub_graph_node.name
 	# Grab internal data before clearing (node gets freed)
-	var internal := sub_graph_node.internal_data.duplicate(true)
+	var internal: Dictionary = sub_graph_node.internal_data.duplicate(true)
 	# Clear and load sub-graph
 	_clear_all_nodes()
 	_node_counter = 0
