@@ -47,6 +47,12 @@ func get_port_output(port: int) -> String:
 
 func _update_display() -> void:
 	count_label.text = "Count: %d" % counter
+	for i in range(6):
+		var label: Label = get_node_or_null("Out%d" % i)
+		if label:
+			var state := "true" if i == counter else "false"
+			label.text = "→ %d %s" % [i, state]
+			label.add_theme_color_override("font_color", Color.GREEN if i == counter else Color.GRAY)
 
 
 func _on_delete_pressed() -> void:
