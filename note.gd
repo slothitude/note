@@ -2,6 +2,7 @@ extends Control
 
 var current_file_path: String = ""
 var unsaved: bool = false
+var _temp_path := OS.get_temp_dir().path_join("note_untitled.tmp")
 var _dragging := false
 var _drag_start := Vector2i()
 var _win_start := Vector2i()
@@ -19,7 +20,7 @@ var _selected_notepad: GraphNode = null
 @onready var open_dialog: FileDialog = %OpenDialog
 @onready var save_dialog: FileDialog = %SaveDialog
 
-enum FileItem { OPEN, SAVE, SEP1, QUIT }
+enum FileItem { NEW, OPEN, SAVE, SEP1, QUIT }
 enum ViewItem { EDIT, GRAPH }
 
 
@@ -29,11 +30,12 @@ func _ready() -> void:
 	_setup_style()
 	_connect_signals()
 	_update_title()
-	text_edit.grab_focus()
+	_switch_view("edit")
 
 
 func _setup_menu() -> void:
 	var fp := file_button.get_popup()
+	fp.add_item("New", FileItem.NEW)
 	fp.add_item("Open", FileItem.OPEN)
 	fp.add_item("Save", FileItem.SAVE)
 	fp.add_separator()
@@ -125,8 +127,14 @@ func _connect_signals() -> void:
 	graph_view.notepad_selected.connect(_on_notepad_selected)
 
 
+func _new_file() -> void:
+	_switch_view("graph")
+	graph_view.add_default_notepad()
+
+
 func _on_file_menu(id: int) -> void:
 	match id:
+		FileItem.NEW: _new_file()
 		FileItem.OPEN: open_dialog.popup_centered(Vector2i(600, 400))
 		FileItem.SAVE: _save()
 		FileItem.QUIT: _auto_save_and_quit()
@@ -176,12 +184,18 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventKey and event.pressed and event.ctrl_pressed:
 		match event.keycode:
+			KEY_N: _new_file(); get_viewport().set_input_as_handled()
 			KEY_O: open_dialog.popup_centered(Vector2i(600, 400)); get_viewport().set_input_as_handled()
 			KEY_S: _save(); get_viewport().set_input_as_handled()
+
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
+		_switch_view("graph" if _current_view == "edit" else "edit")
+		get_viewport().set_input_as_handled()
 
 
 func _on_text_changed() -> void:
 	if not unsaved: unsaved = true
+	_save_temp()
 	_update_title()
 
 
@@ -229,6 +243,23 @@ func _auto_save_and_quit() -> void:
 		save_dialog.popup_centered(Vector2i(600, 400))
 	else:
 		get_tree().quit()
+
+
+func _load_temp() -> void:
+	if FileAccess.file_exists(_temp_path):
+		var f := FileAccess.open(_temp_path, FileAccess.READ)
+		if f:
+			text_edit.text = f.get_as_text()
+			f.close()
+			unsaved = true
+
+
+func _save_temp() -> void:
+	if current_file_path == "":
+		var f := FileAccess.open(_temp_path, FileAccess.WRITE)
+		if f:
+			f.store_string(text_edit.text)
+			f.close()
 
 
 func _update_title() -> void:
