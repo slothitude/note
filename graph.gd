@@ -204,6 +204,7 @@ func _on_exit_subgraph() -> void:
 		return
 	# Save current sub-graph state
 	var subgraph_data := _serialize_current_graph()
+	var exited_name := _current_subgraph_name
 	# Pop parent state
 	var parent: Dictionary = _graph_stack.pop_back()
 	_current_subgraph_name = parent["subgraph_name"]
@@ -211,8 +212,8 @@ func _on_exit_subgraph() -> void:
 	_node_counter = 0
 	_build_nodes_from_data(parent["data"])
 	# Find the SubGraph node we just exited and update its internal data
-	if _current_subgraph_name != "":
-		var node := graph_edit.get_node_or_null(NodePath(_current_subgraph_name))
+	if exited_name != "":
+		var node := graph_edit.get_node_or_null(NodePath(exited_name))
 		if node and node.has_signal("edit_pressed"):
 			node.internal_data = subgraph_data
 			node.call("_rebuild_ports")
