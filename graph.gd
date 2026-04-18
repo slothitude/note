@@ -338,7 +338,7 @@ func load_graph() -> void:
 			node.input_a = node_data.input_a
 		if node_data.has("input_b"):
 			node.input_b = node_data.input_b
-		node._evaluate()
+		node.call("_evaluate")
 	elif node_data.type == "find_file":
 			node = FindFileNodeScene.instantiate()
 			node.name = node_data.name
