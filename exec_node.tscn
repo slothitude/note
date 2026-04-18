@@ -1,11 +1,23 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://exec_node.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://black_boxicon.png" id="2_icon"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
+texture = ExtResource("2_icon")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_titlebar"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
 
 [node name="ExecNode" type="GraphNode"]
 offset_position = Vector2(0, 0)
-size = Vector2(200, 80)
+size = Vector2(300, 300)
+custom_minimum_size = Vector2(300, 300)
 title = "Execute"
+theme_override_styles/panel = SubResource("StyleBoxTexture_panel")
+theme_override_styles/titlebar = SubResource("StyleBoxFlat_titlebar")
 script = ExtResource("1_script")
 
 [node name="RunButton" type="Button" parent="."]
@@ -15,5 +27,6 @@ text = "Run"
 
 [node name="Spacer" type="Control" parent="."]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
 
 [connection signal="pressed" from="RunButton" to="." method="_on_run_pressed"]

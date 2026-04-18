@@ -7,11 +7,11 @@ signal run_pressed(node: GraphNode)
 
 func _ready() -> void:
 	title = "Execute"
-	# Slot 0: input on left (command), stdout output on right
 	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
-	# Slot 1: no input, stderr output on right
 	set_slot(1, false, 0, Color.WHITE, true, 1, Color.RED)
+	print("ExecNode _ready called: ", name)
 
 
 func _on_run_pressed() -> void:
+	print("Run button pressed on: ", name)
 	run_pressed.emit(self)

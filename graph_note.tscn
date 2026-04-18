@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://o6cq8ybgkrb6"]
+
+[ext_resource type="Texture2D" uid="uid://1xnr42vu01uw" path="res://notepad_icon.png" id="1_3lg60"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_rqxpl"]
+texture = ExtResource("1_3lg60")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3phng"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+
+[node name="note" type="GraphNode" unique_id=1534553006]
+offset_left = 259.0
+offset_top = 155.0
+offset_right = 392.0
+offset_bottom = 331.0
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxTexture_rqxpl")
+theme_override_styles/titlebar = SubResource("StyleBoxFlat_3phng")
+position_offset = Vector2(259, 155)
+title = "N.O.T.E"

@@ -1,9 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://0purvv6044mj"]
 
-[ext_resource type="Script" path="res://graph.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://ww1pdvwiflra" path="res://graph.gd" id="1_script"]
 
-[node name="Graph" type="VBoxContainer"]
-layout_mode = 1
+[node name="Graph" type="VBoxContainer" unique_id=1265754093]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -11,22 +10,22 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Toolbar" type="HBoxContainer" parent="."]
+[node name="Toolbar" type="HBoxContainer" parent="." unique_id=673101552]
 layout_mode = 2
 
-[node name="AddNotepad" type="Button" parent="Toolbar"]
+[node name="AddNotepad" type="Button" parent="Toolbar" unique_id=2098721568]
 layout_mode = 2
 text = "+ Notepad"
 
-[node name="AddExec" type="Button" parent="Toolbar"]
+[node name="AddExec" type="Button" parent="Toolbar" unique_id=276643294]
 layout_mode = 2
 text = "+ Execute"
 
-[node name="Spacer" type="Control" parent="Toolbar"]
+[node name="Spacer" type="Control" parent="Toolbar" unique_id=578789044]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="GraphEdit" type="GraphEdit" parent="."]
+[node name="GraphEdit" type="GraphEdit" parent="." unique_id=1021382721]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
