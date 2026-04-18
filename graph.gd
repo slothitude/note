@@ -146,7 +146,10 @@ func add_pc_node() -> void:
 	node.position_offset = Vector2(200 + (_node_counter * 30), 100 + (_node_counter * 30))
 	node.delete_pressed.connect(_on_node_delete)
 	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)(exec_node: GraphNode) -> void:
+	graph_edit.add_child(node)
+
+
+func _on_node_run(exec_node: GraphNode) -> void:
 	_execute_node(exec_node)
 
 
@@ -353,16 +356,16 @@ func load_graph() -> void:
 			if node_data.has("file_path") and node_data.file_path != "":
 				node.set_file(node_data.file_path)
 		elif node_data.type == "pc":
-		node = PCNodeScene.instantiate()
-		node.name = node_data.name
-		node.position_offset = Vector2(node_data.x, node_data.y)
-		node.delete_pressed.connect(_on_node_delete)
-		node.text_updated.connect(_propagate_text.bind(node))
-		graph_edit.add_child(node)
-		if node_data.has("counter"):
-			node.counter = int(node_data.counter)
-			node.call("_update_display")
-	elif node_data.type == "bool":
+			node = PCNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			node.delete_pressed.connect(_on_node_delete)
+			node.text_updated.connect(_propagate_text.bind(node))
+			graph_edit.add_child(node)
+			if node_data.has("counter"):
+				node.counter = int(node_data.counter)
+				node.call("_update_display")
+		elif node_data.type == "bool":
 			node = BoolNodeScene.instantiate()
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
