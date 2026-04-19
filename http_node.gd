@@ -52,6 +52,14 @@ func _add_control_ports() -> void:
 	set_slot(trigger_port, true, 0, Color.RED, false, 0, Color.WHITE)
 
 
+func get_port_output(port: int) -> String:
+	if port == 3:
+		return response_text
+	if port == 4:
+		return error_text
+	return ""
+
+
 func set_input(port: int, text: String) -> void:
 	if port == enable_port:
 		enabled = text.strip_edges() != "" and text.strip_edges().to_lower() != "false"

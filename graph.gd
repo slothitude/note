@@ -16,8 +16,10 @@ const IfNodeScene := preload("res://if_node.tscn")
 const HTTPNodeScene := preload("res://http_node.tscn")
 const MathNodeScene := preload("res://math_node.tscn")
 const ButtonNodeScene := preload("res://button_node.tscn")
+const AssemblerScript := preload("res://assembler.gd")
 
 var _node_counter := 0
+var _assembling := false
 var _visited: Array[StringName] = []
 var graph_file_path: String = ""
 var _graph_stack: Array = []
@@ -405,17 +407,17 @@ func _get_node_type(child: Node) -> String:
 		return "subgraph"
 	if child.has_signal("open_pressed"):
 		return "notepad"
-	if child.has_method("get_port_output"):
-		return "pc"
-	if child.get("interval_secs") != null and child.has_method("set_input"):
-		return "timer"
-	if child.get("response_text") != null:
-		return "http"
 	if child.get("output_true") != null:
 		return "if"
+	if child.get("response_text") != null:
+		return "http"
+	if child.get("interval_secs") != null and child.has_method("set_input"):
+		return "timer"
+	if child.get("counter") != null and child.has_method("get_port_output"):
+		return "pc"
 	if child.get("file_path") != null and not child.has_signal("open_pressed") and not child.has_signal("edit_pressed"):
 		return "find_file"
-	if child.has_method("set_input") and not child.has_method("get_port_output"):
+	if child.has_method("set_input"):
 		if child.get("is_math_node") != null:
 			return "math"
 		if child.get("input_a") != null:
@@ -423,8 +425,6 @@ func _get_node_type(child: Node) -> String:
 		return "binary"
 	if child.get("is_button_node") != null:
 		return "button"
-	if child.get("output_value") != null:
-		return "binary"
 	if child.has_signal("text_updated") and child.title.begins_with("Input"):
 		return "graph_input"
 	if child.has_signal("text_updated") and child.title.begins_with("Output"):
@@ -615,6 +615,8 @@ func _get_output_text(source: GraphNode, from_port: int) -> String:
 
 
 func _propagate_text(source: GraphNode) -> void:
+	if _assembling:
+		return
 	if source.has_signal("edit_pressed") and source.has_method("set_input"):
 		_evaluate_subgraph_internals(source)
 	_propagate_in(graph_edit, source)
@@ -650,6 +652,208 @@ func _on_notepad_open(node: GraphNode) -> void:
 
 
 const SAVE_PATH := "user://graph.json"
+
+var _asm_dialog: ConfirmationDialog = null
+var _asm_edit: TextEdit = null
+
+
+func _on_assemble_btn() -> void:
+	if _asm_dialog == null:
+		_asm_dialog = ConfirmationDialog.new()
+		_asm_dialog.title = "Graph Assembly"
+		_asm_edit = TextEdit.new()
+		_asm_edit.placeholder_text = "# Enter assembly source\nnode a notepad\nset a.text Hello\nwire a -> b"
+		_asm_edit.custom_minimum_size = Vector2i(700, 450)
+		_asm_dialog.add_child(_asm_edit)
+		_asm_dialog.confirmed.connect(_on_assemble_confirmed)
+		add_child(_asm_dialog)
+	_asm_dialog.popup_centered()
+
+
+func _on_assemble_confirmed() -> void:
+	assemble(_asm_edit.text)
+
+
+func assemble(source: String) -> void:
+	var parser := AssemblerScript.new()
+	var data: Dictionary = parser.parse(source)
+	if parser.get_errors().size() > 0:
+		var err_text := "Assembly errors:\n"
+		for e in parser.get_errors():
+			err_text += e + "\n"
+		var dlg := AcceptDialog.new()
+		dlg.dialog_text = err_text
+		add_child(dlg)
+		dlg.popup_centered()
+		dlg.confirmed.connect(dlg.queue_free)
+		return
+
+	_clear_all_nodes()
+	_node_counter = 0
+	_visited.clear()
+
+	_assembling = true
+	var label_to_node: Dictionary = {}
+	var label_to_type: Dictionary = {}
+	var auto_idx := 0
+
+	# Phase 1: Create nodes
+	for node_data in data.nodes:
+		var node := _create_node_by_type(node_data.type)
+		node.name = node_data.name
+		if node_data._has_pos:
+			node.position_offset = Vector2(node_data.x, node_data.y)
+		else:
+			var col := auto_idx % 3
+			var row := auto_idx / 3
+			node.position_offset = Vector2(col * 250.0, row * 150.0)
+			auto_idx += 1
+		# Connect signals
+		if node.has_signal("text_updated"):
+			node.text_updated.connect(_propagate_text.bind(node))
+		if node.has_signal("delete_pressed"):
+			node.delete_pressed.connect(_on_node_delete)
+		if node.has_signal("open_pressed"):
+			node.open_pressed.connect(_on_notepad_open)
+		if node.has_signal("run_pressed"):
+			node.run_pressed.connect(_on_node_run)
+		if node.has_signal("edit_pressed"):
+			node.edit_pressed.connect(_on_enter_subgraph)
+		graph_edit.add_child(node)
+		label_to_node[node_data._label] = node
+		label_to_type[node_data._label] = node_data.type
+		var num_str := ""
+		for c in node_data.name:
+			if c >= '0' and c <= '9':
+				num_str += c
+		if num_str != "":
+			_node_counter = maxi(_node_counter, num_str.to_int() + 1)
+
+		# Apply properties
+		_apply_props(node, node_data.type, node_data._props)
+
+	# Phase 2: Wire connections
+	for conn_data in data.connections:
+		var src: GraphNode = label_to_node[conn_data._src_label]
+		var dst: GraphNode = label_to_node[conn_data._dst_label]
+		var src_type: String = label_to_type[conn_data._src_label]
+		var dst_type: String = label_to_type[conn_data._dst_label]
+
+		var from_port := _resolve_output_port(src, src_type, conn_data._src_port)
+		var to_port := _resolve_input_port(dst, dst_type, conn_data._dst_port)
+
+		if from_port >= 0 and to_port >= 0:
+			graph_edit.connect_node(src.name, from_port, dst.name, to_port)
+
+	# Phase 3: Propagate
+	for label in label_to_node:
+		var node: GraphNode = label_to_node[label]
+		if node.has_signal("text_updated"):
+			_propagate_text(node)
+
+	# Phase 4: Fire triggers
+	for label in data.triggers:
+		if label_to_node.has(label):
+			var node: GraphNode = label_to_node[label]
+			if node.get("trigger_port") != null:
+				node.set_input(int(node.get("trigger_port")), "true")
+			elif node.has_signal("text_updated"):
+				_propagate_text(node)
+
+	_assembling = false
+
+
+func _create_node_by_type(type: String) -> GraphNode:
+	match type:
+		"notepad": return NotepadNodeScene.instantiate()
+		"exec": return ExecNodeScene.instantiate()
+		"find_file": return FindFileNodeScene.instantiate()
+		"bool": return BoolNodeScene.instantiate()
+		"math": return MathNodeScene.instantiate()
+		"if": return IfNodeScene.instantiate()
+		"binary": return BinaryNodeScene.instantiate()
+		"pc": return PCNodeScene.instantiate()
+		"timer": return TimerNodeScene.instantiate()
+		"http": return HTTPNodeScene.instantiate()
+		"button": return ButtonNodeScene.instantiate()
+		"subgraph": return SubGraphNodeScene.instantiate()
+		_: return NotepadNodeScene.instantiate()
+
+
+func _apply_props(node: GraphNode, type: String, props: Dictionary) -> void:
+	for prop in props:
+		var val: String = props[prop]
+		match prop:
+			"text":
+				if node.has_method("set_text"):
+					node.set_text(val)
+			"file_path":
+				if node.has_method("set_file"):
+					node.set_file(val)
+			"enabled":
+				node.set("enabled", val != "false" and val != "")
+			"mode":
+				var mode_map: Dictionary = AssemblerScript.MODE_NAMES.get(type, {})
+				if node.get("mode_option") != null:
+					if mode_map.has(val):
+						node.mode_option.selected = mode_map[val]
+					elif val.is_valid_int():
+						node.mode_option.selected = int(val)
+			"output_value":
+				node.set("output_value", val)
+				if node.get("toggle_btn") != null:
+					node.toggle_btn.text = val
+			"counter":
+				node.set("counter", int(val))
+				if node.has_method("_update_display"):
+					node.call("_update_display")
+			"max":
+				if node.get("max_spin") != null:
+					node.max_spin.value = int(val)
+				if node.has_method("_update_display"):
+					node.call("_update_display")
+			"prompt_text":
+				node.set("prompt_text", val)
+				node.set("output_value", val)
+			"interval":
+				node.set("interval_secs", float(val))
+			"count":
+				if node.get("count_spin") != null:
+					node.count_spin.value = int(val)
+			"url":
+				node.set("url", val)
+				if node.get("url_edit") != null:
+					node.url_edit.text = val
+			"body":
+				node.set("body", val)
+			"headers":
+				node.set("headers_text", val)
+			"method":
+				var mode_map: Dictionary = AssemblerScript.MODE_NAMES.get("http", {})
+				if node.get("method_option") != null:
+					if mode_map.has(val):
+						node.method_option.selected = mode_map[val]
+					elif val.is_valid_int():
+						node.method_option.selected = int(val)
+			"condition_text":
+				node.set("condition_text", val)
+			"data_text":
+				node.set("data_text", val)
+			"title":
+				node.title = val
+
+
+func _resolve_output_port(node: GraphNode, type: String, port_name: String) -> int:
+	var map: Dictionary = AssemblerScript.OUTPUT_PORTS.get(type, {})
+	return int(map.get(port_name, 0))
+
+
+func _resolve_input_port(node: GraphNode, type: String, port_name: String) -> int:
+	var map: Dictionary = AssemblerScript.INPUT_PORTS.get(type, {})
+	var value = map.get(port_name, 0)
+	if value is String:
+		return int(node.get(value)) if node.get(value) != null else 0
+	return int(value)
 
 
 func _on_new_graph() -> void:
@@ -948,7 +1152,12 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.delete_pressed.connect(_on_node_delete)
 			parent.add_child(node)
 		if connect_signals:
-			_node_counter = maxi(_node_counter, int(node_data.name.to_int()) + 1)
+			var num_str := ""
+			for c in node_data.name:
+				if c >= '0' and c <= '9':
+					num_str += c
+			if num_str != "":
+				_node_counter = maxi(_node_counter, num_str.to_int() + 1)
 		if node and node_data.has("enabled") and node.get("enabled") != null and node_data.type != "notepad":
 			node.set("enabled", node_data.enabled)
 	if parent is GraphEdit:
