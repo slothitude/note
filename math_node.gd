@@ -5,7 +5,8 @@ signal text_updated
 
 var input_a: String = ""
 var input_b: String = ""
-var output_value: String = "false"
+var output_value: String = "0"
+var is_math_node := true
 var enabled: bool = true
 var enable_port: int = -1
 var trigger_port: int = -1
@@ -15,13 +16,17 @@ var trigger_port: int = -1
 
 
 func _ready() -> void:
-	title = "Bool"
-	mode_option.add_item("AND")
-	mode_option.add_item("OR")
-	mode_option.add_item("NOT")
+	title = "Math"
+	mode_option.add_item("ADD")
+	mode_option.add_item("SUB")
+	mode_option.add_item("MUL")
+	mode_option.add_item("DIV")
+	mode_option.add_item("MOD")
+	mode_option.add_item("POW")
 	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	set_slot(2, false, 0, Color.WHITE, false, 0, Color.WHITE)
+	set_slot(3, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	_add_control_ports()
 	_evaluate()
 
@@ -63,15 +68,26 @@ func set_input(port: int, text: String) -> void:
 
 
 func _evaluate() -> void:
-	var has_a := input_a != ""
-	var has_b := input_b != ""
+	var a: float = input_a.to_float() if input_a != "" else 0.0
+	var b: float = input_b.to_float() if input_b != "" else 0.0
 	var mode := mode_option.selected
 	match mode:
-		0: output_value = "true" if (has_a and has_b) else "false"
-		1: output_value = "true" if (has_a or has_b) else "false"
-		2: output_value = "true" if not has_a else "false"
+		0: output_value = _fmt(a + b)
+		1: output_value = _fmt(a - b)
+		2: output_value = _fmt(a * b)
+		3: output_value = "ERROR" if b == 0.0 else _fmt(a / b)
+		4: output_value = "ERROR" if b == 0.0 else _fmt(fmod(a, b))
+		5: output_value = _fmt(pow(a, b))
 	result_label.text = output_value
 	text_updated.emit()
+
+
+func _fmt(v: float) -> String:
+	if is_nan(v) or is_inf(v):
+		return "ERROR"
+	if v == floor(v) and abs(v) < 9007199254740992.0:
+		return str(int(v))
+	return str(v)
 
 
 func _on_mode_changed(_index: int) -> void:

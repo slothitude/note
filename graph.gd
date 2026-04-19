@@ -14,6 +14,8 @@ const TimerNodeScene := preload("res://timer_node.tscn")
 const BinaryNodeScene := preload("res://binary_node.tscn")
 const IfNodeScene := preload("res://if_node.tscn")
 const HTTPNodeScene := preload("res://http_node.tscn")
+const MathNodeScene := preload("res://math_node.tscn")
+const ButtonNodeScene := preload("res://button_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
@@ -71,6 +73,8 @@ func _populate_node_menu(menu: PopupMenu) -> void:
 	menu.add_item("Timer", 7)
 	menu.add_item("Sub-Graph", 8)
 	menu.add_item("HTTP", 9)
+	menu.add_item("Math", 10)
+	menu.add_item("Button", 11)
 
 
 func _on_add_node_menu(id: int) -> void:
@@ -85,6 +89,8 @@ func _on_add_node_menu(id: int) -> void:
 		7: add_timer_node()
 		8: add_sub_graph_node()
 		9: add_http_node()
+		10: add_math_node()
+		11: add_button_node()
 
 
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
@@ -245,6 +251,26 @@ func add_http_node() -> void:
 	graph_edit.add_child(node)
 
 
+func add_math_node() -> void:
+	var node := MathNodeScene.instantiate()
+	node.name = "Math%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = _get_next_node_position()
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
+func add_button_node() -> void:
+	var node := ButtonNodeScene.instantiate()
+	node.name = "Button%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = _get_next_node_position()
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
 func add_sub_graph_node() -> void:
 	var node := SubGraphNodeScene.instantiate()
 	node.name = "SubGraph%d" % _node_counter
@@ -385,14 +411,20 @@ func _get_node_type(child: Node) -> String:
 		return "timer"
 	if child.get("response_text") != null:
 		return "http"
-	if child.has_method("set_input") and not child.has_method("get_port_output"):
-		return "bool"
-	if child.get("output_true") != null and child.has_method("set_input"):
+	if child.get("output_true") != null:
 		return "if"
-	if child.get("output_value") != null and not child.has_method("set_input"):
-		return "binary"
 	if child.get("file_path") != null and not child.has_signal("open_pressed") and not child.has_signal("edit_pressed"):
 		return "find_file"
+	if child.has_method("set_input") and not child.has_method("get_port_output"):
+		if child.get("is_math_node") != null:
+			return "math"
+		if child.get("input_a") != null:
+			return "bool"
+		return "binary"
+	if child.get("is_button_node") != null:
+		return "button"
+	if child.get("output_value") != null:
+		return "binary"
 	if child.has_signal("text_updated") and child.title.begins_with("Input"):
 		return "graph_input"
 	if child.has_signal("text_updated") and child.title.begins_with("Output"):
@@ -418,6 +450,10 @@ func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
 	elif t == "if":
 		node_data["condition_text"] = child.condition_text
 		node_data["data_text"] = child.data_text
+	elif t == "math":
+		node_data["input_a"] = child.input_a
+		node_data["input_b"] = child.input_b
+		node_data["mode"] = child.mode_option.selected
 	elif t == "http":
 		node_data["url"] = child.url
 		node_data["body"] = child.body
@@ -438,6 +474,8 @@ func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
 		node_data["stored_outputs"] = child.stored_outputs
 	elif t == "graph_input" or t == "graph_output":
 		node_data["title"] = child.title
+	if child.get("enabled") != null and t != "notepad":
+		node_data["enabled"] = child.get("enabled")
 
 
 func _serialize_current_graph() -> Dictionary:
@@ -559,6 +597,8 @@ func _on_delete_action(action: StringName) -> void:
 
 
 func _get_output_text(source: GraphNode, from_port: int) -> String:
+	if source.get("enabled") != null and not source.get("enabled"):
+		return ""
 	if source.has_method("get_port_output"):
 		return source.get_port_output(from_port)
 	if source.get("output_true") != null:
@@ -568,8 +608,6 @@ func _get_output_text(source: GraphNode, from_port: int) -> String:
 	if source.get("output_value") != null:
 		return str(source.get("output_value"))
 	if source.get("text_buffer") != null:
-		if source.get("enabled") != null and not source.get("enabled"):
-			return ""
 		return str(source.get("text_buffer"))
 	if source.get("file_path") != null:
 		return str(source.get("file_path"))
@@ -837,6 +875,21 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.stored_inputs = node_data.stored_inputs
 			if node_data.has("stored_outputs"):
 				node.stored_outputs = node_data.stored_outputs
+		elif node_data.type == "math":
+			node = MathNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
+			if node_data.has("input_a"):
+				node.input_a = node_data.input_a
+			if node_data.has("input_b"):
+				node.input_b = node_data.input_b
+			if node_data.has("mode"):
+				node.mode_option.selected = int(node_data.mode)
+			node.call("_evaluate")
 		elif node_data.type == "graph_input":
 			node = GraphInputNodeScene.instantiate()
 			node.name = node_data.name
@@ -878,6 +931,14 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			parent.add_child(node)
 			if node_data.has("title"):
 				node.title = node_data.title
+		elif node_data.type == "button":
+			node = ButtonNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
 		else:
 			node = ExecNodeScene.instantiate()
 			node.name = node_data.name
@@ -888,6 +949,8 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			parent.add_child(node)
 		if connect_signals:
 			_node_counter = maxi(_node_counter, int(node_data.name.to_int()) + 1)
+		if node and node_data.has("enabled") and node.get("enabled") != null and node_data.type != "notepad":
+			node.set("enabled", node_data.enabled)
 	if parent is GraphEdit:
 		for conn_data in data.connections:
 			parent.connect_node(

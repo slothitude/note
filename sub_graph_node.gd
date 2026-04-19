@@ -7,6 +7,9 @@ signal text_updated
 var internal_data: Dictionary = {"nodes": [], "connections": []}
 var stored_inputs: Array = []
 var stored_outputs: Array = []
+var enabled: bool = true
+var enable_port: int = -1
+var trigger_port: int = -1
 
 
 func _ready() -> void:
@@ -32,7 +35,7 @@ func _rebuild_ports() -> void:
 
 	# Remove old dynamic children
 	for child in get_children():
-		if child.name.begins_with("DynIn") or child.name.begins_with("DynOut"):
+		if child.name.begins_with("DynIn") or child.name.begins_with("DynOut") or child.name == "EnableLbl" or child.name == "TriggerLbl":
 			remove_child(child)
 			child.queue_free()
 
@@ -58,6 +61,27 @@ func _rebuild_ports() -> void:
 		move_child(label, idx)
 		set_slot(idx, false, 0, Color.WHITE, true, 0, Color.GREEN)
 		idx += 1
+
+	# Add Enable and Trigger ports
+	var enable_lbl := Label.new()
+	enable_lbl.name = "EnableLbl"
+	enable_lbl.text = "Enable"
+	enable_lbl.layout_mode = 2
+	add_child(enable_lbl)
+	move_child(enable_lbl, idx)
+	enable_port = idx
+	set_slot(idx, true, 0, Color.YELLOW, false, 0, Color.WHITE)
+	idx += 1
+
+	var trigger_lbl := Label.new()
+	trigger_lbl.name = "TriggerLbl"
+	trigger_lbl.text = "Trigger"
+	trigger_lbl.layout_mode = 2
+	add_child(trigger_lbl)
+	move_child(trigger_lbl, idx)
+	trigger_port = idx
+	set_slot(idx, true, 0, Color.RED, false, 0, Color.WHITE)
+	idx += 1
 
 	# Clear remaining slots
 	while idx < 20:
@@ -86,10 +110,19 @@ func _get_output_name(i: int) -> String:
 
 
 func set_input(port: int, text: String) -> void:
+	if port == enable_port:
+		enabled = text.strip_edges() != "" and text.strip_edges().to_lower() != "false"
+		return
+	if port == trigger_port:
+		if enabled:
+			text_updated.emit()
+		return
+	if not enabled:
+		return
 	while stored_inputs.size() <= port:
 		stored_inputs.append("")
 	stored_inputs[port] = text
-	text_updated.emit()
+	# Don't emit text_updated — wait for trigger
 
 
 func get_port_output(port: int) -> String:
