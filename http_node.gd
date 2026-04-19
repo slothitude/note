@@ -8,6 +8,9 @@ var body: String = ""
 var headers_text: String = ""
 var response_text: String = ""
 var error_text: String = ""
+var enabled: bool = true
+var enable_port: int = -1
+var trigger_port: int = -1
 
 @onready var method_option: OptionButton = $MethodOption
 @onready var url_edit: LineEdit = $UrlEdit
@@ -21,6 +24,7 @@ func _ready() -> void:
 	set_slot(2, true, 0, Color.MAGENTA, false, 0, Color.WHITE)
 	set_slot(3, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	set_slot(4, false, 0, Color.WHITE, true, 0, Color.RED)
+	_add_control_ports()
 
 	var http := HTTPRequest.new()
 	http.name = "HTTPRequest"
@@ -28,7 +32,36 @@ func _ready() -> void:
 	http.request_completed.connect(_on_request_completed)
 
 
+func _add_control_ports() -> void:
+	var insert_at := get_child_count()
+	for i in range(get_child_count()):
+		if get_child(i).name == "DeleteButton":
+			insert_at = i
+			break
+	var enable_lbl := Label.new()
+	enable_lbl.text = "Enable"
+	add_child(enable_lbl)
+	move_child(enable_lbl, insert_at)
+	enable_port = insert_at
+	set_slot(enable_port, true, 0, Color.YELLOW, false, 0, Color.WHITE)
+	var trigger_lbl := Label.new()
+	trigger_lbl.text = "Trigger"
+	add_child(trigger_lbl)
+	move_child(trigger_lbl, insert_at + 1)
+	trigger_port = insert_at + 1
+	set_slot(trigger_port, true, 0, Color.RED, false, 0, Color.WHITE)
+
+
 func set_input(port: int, text: String) -> void:
+	if port == enable_port:
+		enabled = text.strip_edges() != "" and text.strip_edges().to_lower() != "false"
+		return
+	if port == trigger_port:
+		if enabled:
+			_send_request()
+		return
+	if not enabled:
+		return
 	if port == 0:
 		url = text.strip_edges()
 		url_edit.text = url
@@ -38,7 +71,7 @@ func set_input(port: int, text: String) -> void:
 		headers_text = text
 
 
-func _on_send() -> void:
+func _send_request() -> void:
 	url = url_edit.text.strip_edges()
 	if url == "":
 		status_label.text = "No URL"
@@ -85,6 +118,12 @@ func _on_request_completed(_result: int, _code: int, _headers: PackedStringArray
 		error_text = ""
 		status_label.text = "OK: %d (%d bytes)" % [_code, body.size()]
 	text_updated.emit()
+
+
+func _on_send() -> void:
+	if not enabled:
+		return
+	_send_request()
 
 
 func _on_delete_pressed() -> void:

@@ -7,6 +7,10 @@ signal text_updated
 var text_buffer: String = ""
 var file_path: String = ""
 var enabled: bool = true
+var trigger_port: int = -1
+
+var _pending_op: String = ""
+var _pending_text: String = ""
 
 @onready var preview: Label = $Preview
 
@@ -17,6 +21,21 @@ func _ready() -> void:
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(2, true, 0, Color.GREEN, false, 0, Color.WHITE)
 	set_slot(3, true, 0, Color.YELLOW, false, 0, Color.WHITE)
+	_add_trigger_port()
+
+
+func _add_trigger_port() -> void:
+	var insert_at := get_child_count()
+	for i in range(get_child_count()):
+		if get_child(i).name == "OpenButton":
+			insert_at = i
+			break
+	var trigger_lbl := Label.new()
+	trigger_lbl.text = "Trigger"
+	add_child(trigger_lbl)
+	move_child(trigger_lbl, insert_at)
+	trigger_port = insert_at
+	set_slot(trigger_port, true, 0, Color.RED, false, 0, Color.WHITE)
 
 
 func set_file(path: String) -> void:
@@ -40,12 +59,28 @@ func set_input(port: int, text: String) -> void:
 	if port == 3:
 		enabled = text.strip_edges().to_lower() != "false" and text.strip_edges() != ""
 		return
+	if port == trigger_port:
+		if enabled and _pending_op != "":
+			_apply_pending()
+			text_updated.emit()
+		return
 	if not enabled:
 		return
+	# Data ports: store pending, don't apply yet
 	match port:
-		0: set_text(text)
-		1: set_text(text + text_buffer)
-		2: set_text(text_buffer + text)
+		0: _pending_op = "set"; _pending_text = text
+		1: _pending_op = "prepend"; _pending_text = text
+		2: _pending_op = "append"; _pending_text = text
+
+
+func _apply_pending() -> void:
+	match _pending_op:
+		"set": text_buffer = _pending_text
+		"prepend": text_buffer = _pending_text + text_buffer
+		"append": text_buffer = text_buffer + _pending_text
+	_pending_op = ""
+	_pending_text = ""
+	_update_preview()
 
 
 func _update_preview() -> void:

@@ -153,16 +153,42 @@ func _switch_view(view: String) -> void:
 	if _selected_notepad != null and _current_view == "edit":
 		_selected_notepad.set_text(text_edit.text)
 	_current_view = view
+	_clear_graph_buttons()
 	if view == "edit":
 		text_edit.visible = true
 		graph_view.visible = false
 		if _selected_notepad != null:
 			text_edit.text = _selected_notepad.text_buffer
+		_show_graph_buttons()
 		text_edit.grab_focus()
 	else:
 		text_edit.visible = false
 		graph_view.visible = true
 	_update_title()
+
+
+func _clear_graph_buttons() -> void:
+	for child in title_bar.get_children():
+		if child.name.begins_with("GBtn_"):
+			child.queue_free()
+
+
+func _show_graph_buttons() -> void:
+	var ge: GraphEdit = graph_view.get_node_or_null("GraphEdit")
+	if not ge:
+		return
+	var dark := Color(0.1, 0.1, 0.1, 1.0)
+	var white := Color.WHITE
+	var spacer := title_bar.get_node("Spacer")
+	for child in ge.get_children():
+		if child is GraphNode and child.get("is_button_node") != null:
+			var btn := Button.new()
+			btn.name = "GBtn_" + child.name
+			btn.text = child.title
+			btn.pressed.connect(child.press)
+			_style_menu_btn(btn, dark, white)
+			title_bar.add_child(btn)
+			title_bar.move_child(btn, spacer.get_index() + 1)
 
 
 func _on_notepad_selected(node: GraphNode) -> void:

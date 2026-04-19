@@ -7,6 +7,8 @@ var prompt_text: String = ""
 var output_value: String = ""
 var interval_secs: float = 1.0
 var countdown_remaining: int = 0
+var enabled: bool = true
+var enable_port: int = -1
 
 @onready var status_label: Label = $StatusLabel
 @onready var mode_option: OptionButton = $ModeOption
@@ -20,16 +22,36 @@ func _ready() -> void:
 	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(2, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(5, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	mode_option.add_item("One-shot")
 	mode_option.add_item("Countdown")
+	set_slot(5, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	_add_enable_port()
 	_timer = Timer.new()
 	add_child(_timer)
 	_timer.timeout.connect(_on_timer_tick)
 	_update_status()
 
 
+func _add_enable_port() -> void:
+	var insert_at := get_child_count()
+	for i in range(get_child_count()):
+		if get_child(i).name == "DeleteButton":
+			insert_at = i
+			break
+	var enable_lbl := Label.new()
+	enable_lbl.text = "Enable"
+	add_child(enable_lbl)
+	move_child(enable_lbl, insert_at)
+	enable_port = insert_at
+	set_slot(enable_port, true, 0, Color.YELLOW, false, 0, Color.WHITE)
+
+
 func set_input(port: int, text: String) -> void:
+	if port == enable_port:
+		enabled = text.strip_edges() != "" and text.strip_edges().to_lower() != "false"
+		return
+	if not enabled:
+		return
 	match port:
 		0:  # prompt
 			prompt_text = text
@@ -52,6 +74,8 @@ func _start_timer() -> void:
 
 
 func _on_timer_tick() -> void:
+	if not enabled:
+		return
 	match mode_option.selected:
 		0:  # One-shot
 			_timer.stop()

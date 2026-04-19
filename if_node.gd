@@ -3,19 +3,25 @@ extends GraphNode
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
-var file_path: String = ""
+var condition_text: String = ""
+var data_text: String = ""
+var output_true: String = ""
+var output_false: String = ""
 var enabled: bool = true
 var enable_port: int = -1
 var trigger_port: int = -1
-var _search_text: String = ""
 
-@onready var result: Label = $Result
+@onready var result_label: Label = $Result
 
 
 func _ready() -> void:
-	title = "Find File"
-	set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
+	title = "If"
+	set_slot(0, true, 0, Color.YELLOW, false, 0, Color.WHITE)
+	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
+	set_slot(2, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	set_slot(3, false, 0, Color.WHITE, true, 0, Color.RED)
 	_add_control_ports()
+	_evaluate()
 
 
 func _add_control_ports() -> void:
@@ -43,36 +49,27 @@ func set_input(port: int, text: String) -> void:
 		enabled = text.strip_edges() != "" and text.strip_edges().to_lower() != "false"
 		return
 	if port == trigger_port:
-		if enabled and _search_text != "":
-			_do_search(_search_text)
+		if enabled:
+			_evaluate()
 		return
 	if not enabled:
 		return
 	if port == 0:
-		_search_text = text.strip_edges()
+		condition_text = text.strip_edges()
+	elif port == 1:
+		data_text = text.strip_edges()
 
 
-func _do_search(fname: String) -> void:
-	if fname == "":
-		file_path = "false"
-		result.text = "(empty)"
-		return
-	var found := _search_for_file(fname)
-	file_path = found if found != "" else "false"
-	result.text = found if found != "" else "false"
+func _evaluate() -> void:
+	var cond := condition_text != "" and condition_text.to_lower() != "false"
+	if cond:
+		output_true = data_text
+		output_false = ""
+	else:
+		output_true = ""
+		output_false = data_text
+	result_label.text = "→ true" if cond else "→ false"
 	text_updated.emit()
-
-
-func _search_for_file(fname: String) -> String:
-	var output := []
-	var search_root := "C:\\Users\\aaron\\exploring"
-	var args := PackedStringArray(["/C", "where /R " + search_root + " " + fname])
-	OS.execute("cmd", args, output)
-	for line in output:
-		var path := str(line).strip_edges()
-		if path != "" and not path.begins_with("INFO:") and not path.begins_with("ERROR:"):
-			return path
-	return ""
 
 
 func _on_delete_pressed() -> void:

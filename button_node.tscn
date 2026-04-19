@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://button_node.gd" id="1_script"]
+
+[node name="ButtonNode" type="GraphNode"]
+custom_minimum_size = Vector2(100, 60)
+offset_right = 100.0
+offset_bottom = 60.0
+title = "Button"
+script = ExtResource("1_script")
+
+[node name="PressBtn" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Press"
+
+[node name="DeleteButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Delete"
+
+[connection signal="pressed" from="PressBtn" to="." method="_on_press_pressed"]
+[connection signal="pressed" from="DeleteButton" to="." method="_on_delete_pressed"]
