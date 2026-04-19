@@ -1,0 +1,60 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://http_node.gd" id="1_script"]
+
+[node name="HttpNode" type="GraphNode"]
+custom_minimum_size = Vector2(240, 140)
+offset_right = 240.0
+offset_bottom = 140.0
+title = "HTTP"
+script = ExtResource("1_script")
+
+[node name="MethodOption" type="OptionButton" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 4
+popup/item_0/text = "GET"
+popup/item_1/text = "POST"
+popup/item_2/text = "PUT"
+popup/item_3/text = "DELETE"
+
+[node name="UrlEdit" type="LineEdit" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "https://..."
+
+[node name="BodyLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Body"
+
+[node name="HeadersLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Headers"
+
+[node name="SendButton" type="Button" parent="."]
+layout_mode = 2
+text = "Send"
+
+[node name="StatusLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ready"
+
+[node name="ResponseLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Response"
+
+[node name="ErrorLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Error"
+
+[node name="Spacer" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="DeleteButton" type="Button" parent="."]
+layout_mode = 2
+text = "Delete"
+
+[connection signal="pressed" from="SendButton" to="." method="_on_send"]
+[connection signal="pressed" from="DeleteButton" to="." method="_on_delete_pressed"]
