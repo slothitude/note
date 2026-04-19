@@ -60,6 +60,14 @@ func set_input(port: int, text: String) -> void:
 		data_text = text.strip_edges()
 
 
+func get_port_output(port: int) -> String:
+	if port == 2:
+		return output_true
+	if port == 3:
+		return output_false
+	return ""
+
+
 func _evaluate() -> void:
 	var cond := condition_text != "" and condition_text.to_lower() != "false"
 	if cond:

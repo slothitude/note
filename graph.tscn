@@ -44,6 +44,10 @@ text = "Open"
 layout_mode = 2
 text = "Save"
 
+[node name="AsmBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Assemble"
+
 [node name="Spacer" type="Control" parent="Toolbar" unique_id=578789044]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -62,3 +66,4 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/NewBtn" to="." method="_on_new_graph"]
 [connection signal="pressed" from="Toolbar/OpenBtn" to="." method="_on_open_graph"]
 [connection signal="pressed" from="Toolbar/SaveBtn" to="." method="_on_save_graph"]
+[connection signal="pressed" from="Toolbar/AsmBtn" to="." method="_on_assemble_btn"]
