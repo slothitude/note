@@ -13,37 +13,9 @@ script = ExtResource("1_script")
 [node name="Toolbar" type="HBoxContainer" parent="." unique_id=673101552]
 layout_mode = 2
 
-[node name="AddNotepad" type="Button" parent="Toolbar" unique_id=2098721568]
+[node name="AddNodeMenu" type="MenuButton" parent="Toolbar"]
 layout_mode = 2
-text = "+ Notepad"
-
-[node name="AddExec" type="Button" parent="Toolbar" unique_id=276643294]
-layout_mode = 2
-text = "+ Execute"
-
-[node name="AddFindFile" type="Button" parent="Toolbar" unique_id=478912054]
-layout_mode = 2
-text = "+ Find File"
-
-[node name="AddBool" type="Button" parent="Toolbar" unique_id=578912055]
-layout_mode = 2
-text = "+ Bool"
-
-[node name="AddPC" type="Button" parent="Toolbar" unique_id=678912056]
-layout_mode = 2
-text = "+ PC"
-
-[node name="AddTimer" type="Button" parent="Toolbar"]
-layout_mode = 2
-text = "+ Timer"
-
-[node name="AddSubGraph" type="Button" parent="Toolbar"]
-layout_mode = 2
-text = "+ Graph"
-
-[node name="AddBinary" type="Button" parent="Toolbar"]
-layout_mode = 2
-text = "+ Binary"
+text = "+ Add Node"
 
 [node name="AddGInput" type="Button" parent="Toolbar"]
 layout_mode = 2
@@ -59,9 +31,6 @@ visible = false
 layout_mode = 2
 text = "← Back"
 visible = false
-
-[node name="Sep" type="VSeparator" parent="Toolbar"]
-layout_mode = 2
 
 [node name="NewBtn" type="Button" parent="Toolbar"]
 layout_mode = 2
@@ -79,20 +48,14 @@ text = "Save"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="ContextMenu" type="PopupMenu" parent="."]
+
 [node name="GraphEdit" type="GraphEdit" parent="." unique_id=1021382721]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 zoom_min = 0.2
 
-[connection signal="pressed" from="Toolbar/AddNotepad" to="." method="add_notepad_node"]
-[connection signal="pressed" from="Toolbar/AddExec" to="." method="add_exec_node"]
-[connection signal="pressed" from="Toolbar/AddFindFile" to="." method="add_find_file_node"]
-[connection signal="pressed" from="Toolbar/AddBool" to="." method="add_bool_node"]
-[connection signal="pressed" from="Toolbar/AddPC" to="." method="add_pc_node"]
-[connection signal="pressed" from="Toolbar/AddTimer" to="." method="add_timer_node"]
-[connection signal="pressed" from="Toolbar/AddSubGraph" to="." method="add_sub_graph_node"]
-[connection signal="pressed" from="Toolbar/AddBinary" to="." method="add_binary_node"]
 [connection signal="pressed" from="Toolbar/AddGInput" to="." method="add_graph_input_node"]
 [connection signal="pressed" from="Toolbar/AddGOutput" to="." method="add_graph_output_node"]
 [connection signal="pressed" from="Toolbar/BackBtn" to="." method="_on_exit_subgraph"]

@@ -12,12 +12,16 @@ const GraphInputNodeScene := preload("res://graph_input_node.tscn")
 const GraphOutputNodeScene := preload("res://graph_output_node.tscn")
 const TimerNodeScene := preload("res://timer_node.tscn")
 const BinaryNodeScene := preload("res://binary_node.tscn")
+const IfNodeScene := preload("res://if_node.tscn")
+const HTTPNodeScene := preload("res://http_node.tscn")
 
 var _node_counter := 0
 var _visited: Array[StringName] = []
 var graph_file_path: String = ""
 var _graph_stack: Array = []
 var _current_subgraph_name: String = ""
+var _use_context_pos := false
+var _context_spawn_pos := Vector2.ZERO
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -25,6 +29,7 @@ var _current_subgraph_name: String = ""
 func _ready() -> void:
 	_setup_style()
 	_connect_signals()
+	_build_node_menus()
 	if FileAccess.file_exists(SAVE_PATH):
 		load_graph()
 	else:
@@ -45,6 +50,43 @@ func _connect_signals() -> void:
 	graph_edit.gui_input.connect(_on_graph_input)
 
 
+func _build_node_menus() -> void:
+	var popup: PopupMenu = $Toolbar/AddNodeMenu.get_popup()
+	_populate_node_menu(popup)
+	popup.id_pressed.connect(_on_add_node_menu)
+	var context: PopupMenu = $ContextMenu
+	_populate_node_menu(context)
+	context.id_pressed.connect(_on_add_node_menu)
+	context.popup_hide.connect(func(): _use_context_pos = false)
+
+
+func _populate_node_menu(menu: PopupMenu) -> void:
+	menu.add_item("Notepad", 0)
+	menu.add_item("Execute", 1)
+	menu.add_item("Find File", 2)
+	menu.add_item("Bool", 3)
+	menu.add_item("Binary", 4)
+	menu.add_item("If", 5)
+	menu.add_item("PC", 6)
+	menu.add_item("Timer", 7)
+	menu.add_item("Sub-Graph", 8)
+	menu.add_item("HTTP", 9)
+
+
+func _on_add_node_menu(id: int) -> void:
+	match id:
+		0: add_notepad_node()
+		1: add_exec_node()
+		2: add_find_file_node()
+		3: add_bool_node()
+		4: add_binary_node()
+		5: add_if_node()
+		6: add_pc_node()
+		7: add_timer_node()
+		8: add_sub_graph_node()
+		9: add_http_node()
+
+
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
 	graph_edit.connect_node(from, from_port, to, to_port)
 	var source := graph_edit.get_node_or_null(NodePath(from))
@@ -61,6 +103,12 @@ func _on_graph_input(event: InputEvent) -> void:
 		var conn: Dictionary = graph_edit.get_closest_connection_at_point(event.position, 10.0)
 		if not conn.is_empty():
 			graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+		else:
+			_use_context_pos = true
+			_context_spawn_pos = graph_edit.scroll_offset + event.position / graph_edit.zoom
+			var context: PopupMenu = $ContextMenu
+			context.position = DisplayServer.mouse_get_position()
+			context.popup()
 
 
 func _on_delete_nodes(nodes: Array[StringName]) -> void:
@@ -177,6 +225,26 @@ func add_timer_node() -> void:
 	graph_edit.add_child(node)
 
 
+func add_if_node() -> void:
+	var node := IfNodeScene.instantiate()
+	node.name = "If%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = _get_next_node_position()
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
+func add_http_node() -> void:
+	var node := HTTPNodeScene.instantiate()
+	node.name = "Http%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = _get_next_node_position()
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
 func add_sub_graph_node() -> void:
 	var node := SubGraphNodeScene.instantiate()
 	node.name = "SubGraph%d" % _node_counter
@@ -223,6 +291,9 @@ func _count_node_type(type: String) -> int:
 
 
 func _get_next_node_position() -> Vector2:
+	if _use_context_pos:
+		_use_context_pos = false
+		return _context_spawn_pos
 	var existing := 0
 	for child in graph_edit.get_children():
 		if child is GraphNode:
@@ -312,8 +383,12 @@ func _get_node_type(child: Node) -> String:
 		return "pc"
 	if child.get("interval_secs") != null and child.has_method("set_input"):
 		return "timer"
+	if child.get("response_text") != null:
+		return "http"
 	if child.has_method("set_input") and not child.has_method("get_port_output"):
 		return "bool"
+	if child.get("output_true") != null and child.has_method("set_input"):
+		return "if"
 	if child.get("output_value") != null and not child.has_method("set_input"):
 		return "binary"
 	if child.get("file_path") != null and not child.has_signal("open_pressed") and not child.has_signal("edit_pressed"):
@@ -340,6 +415,16 @@ func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
 		node_data["mode"] = child.mode_option.selected
 	elif t == "binary":
 		node_data["output_value"] = child.output_value
+	elif t == "if":
+		node_data["condition_text"] = child.condition_text
+		node_data["data_text"] = child.data_text
+	elif t == "http":
+		node_data["url"] = child.url
+		node_data["body"] = child.body
+		node_data["headers_text"] = child.headers_text
+		node_data["method"] = child.method_option.selected
+		node_data["response_text"] = child.response_text
+		node_data["error_text"] = child.error_text
 	elif t == "timer":
 		node_data["prompt_text"] = child.prompt_text
 		node_data["interval_secs"] = child.interval_secs
@@ -476,6 +561,10 @@ func _on_delete_action(action: StringName) -> void:
 func _get_output_text(source: GraphNode, from_port: int) -> String:
 	if source.has_method("get_port_output"):
 		return source.get_port_output(from_port)
+	if source.get("output_true") != null:
+		return source.output_true if from_port == 0 else source.output_false
+	if source.get("response_text") != null:
+		return source.response_text if from_port == 0 else source.error_text
 	if source.get("output_value") != null:
 		return str(source.get("output_value"))
 	if source.get("text_buffer") != null:
@@ -719,6 +808,19 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("output_value"):
 				node.output_value = node_data.output_value
 				node.toggle_btn.text = node_data.output_value
+		elif node_data.type == "if":
+			node = IfNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
+			if node_data.has("condition_text"):
+				node.condition_text = node_data.condition_text
+			if node_data.has("data_text"):
+				node.data_text = node_data.data_text
+			node.call("_evaluate")
 		elif node_data.type == "subgraph":
 			node = SubGraphNodeScene.instantiate()
 			node.name = node_data.name
@@ -745,6 +847,27 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			parent.add_child(node)
 			if node_data.has("title"):
 				node.title = node_data.title
+		elif node_data.type == "http":
+			node = HTTPNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
+			if node_data.has("url"):
+				node.url = node_data.url
+				node.url_edit.text = node_data.url
+			if node_data.has("body"):
+				node.body = node_data.body
+			if node_data.has("headers_text"):
+				node.headers_text = node_data.headers_text
+			if node_data.has("method"):
+				node.method_option.selected = int(node_data.method)
+			if node_data.has("response_text"):
+				node.response_text = node_data.response_text
+			if node_data.has("error_text"):
+				node.error_text = node_data.error_text
 		elif node_data.type == "graph_output":
 			node = GraphOutputNodeScene.instantiate()
 			node.name = node_data.name
