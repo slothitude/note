@@ -36,6 +36,7 @@ var _graph_stack: Array = []
 var _current_subgraph_name: String = ""
 var _use_context_pos := false
 var _context_spawn_pos := Vector2.ZERO
+var _undo_redo := UndoRedo.new()
 
 @onready var graph_edit: GraphEdit = %GraphEdit
 
@@ -97,21 +98,30 @@ func _on_add_node_menu(id: int) -> void:
 
 
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
-	graph_edit.connect_node(from, from_port, to, to_port)
+	_undo_redo.create_action("Connect nodes")
+	_undo_redo.add_do_method(graph_edit.connect_node.bind(from, from_port, to, to_port))
+	_undo_redo.add_undo_method(graph_edit.disconnect_node.bind(from, from_port, to, to_port))
+	_undo_redo.commit_action()
 	var source := graph_edit.get_node_or_null(NodePath(from))
 	if source:
 		_propagate_text(source)
 
 
 func _on_disconnection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
-	graph_edit.disconnect_node(from, from_port, to, to_port)
+	_undo_redo.create_action("Disconnect nodes")
+	_undo_redo.add_do_method(graph_edit.disconnect_node.bind(from, from_port, to, to_port))
+	_undo_redo.add_undo_method(graph_edit.connect_node.bind(from, from_port, to, to_port))
+	_undo_redo.commit_action()
 
 
 func _on_graph_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		var conn: Dictionary = graph_edit.get_closest_connection_at_point(event.position, 10.0)
 		if not conn.is_empty():
-			graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+			_undo_redo.create_action("Disconnect nodes")
+			_undo_redo.add_do_method(graph_edit.disconnect_node.bind(conn.from_node, conn.from_port, conn.to_node, conn.to_port))
+			_undo_redo.add_undo_method(graph_edit.connect_node.bind(conn.from_node, conn.from_port, conn.to_node, conn.to_port))
+			_undo_redo.commit_action()
 		else:
 			_use_context_pos = true
 			_context_spawn_pos = graph_edit.scroll_offset + event.position / graph_edit.zoom
@@ -121,11 +131,24 @@ func _on_graph_input(event: InputEvent) -> void:
 
 
 func _on_delete_nodes(nodes: Array[StringName]) -> void:
+	_undo_redo.create_action("Delete nodes")
 	for node_name in nodes:
 		var node := graph_edit.get_node_or_null(NodePath(node_name))
-		if node:
-			_clear_connections_for(node_name)
-			node.queue_free()
+		if not node:
+			continue
+		# Save connections for undo
+		var node_conns: Array = []
+		for conn in graph_edit.get_connection_list():
+			if conn.from_node == node_name or conn.to_node == node_name:
+				node_conns.append({"from": conn.from_node, "from_port": conn.from_port, "to": conn.to_node, "to_port": conn.to_port})
+		# Save serialized data for undo
+		var node_type := _get_node_type(node)
+		var saved_data := {"name": String(node_name), "type": node_type, "x": node.position_offset.x, "y": node.position_offset.y}
+		_serialize_node_data(node, saved_data)
+		_undo_redo.add_do_method(_clear_connections_for.bind(node_name))
+		_undo_redo.add_do_method(node.queue_free)
+		_undo_redo.add_undo_method(_undo_restore_node.bind(saved_data, node_conns))
+	_undo_redo.commit_action()
 
 
 func _clear_connections_for(node_name: StringName) -> void:
@@ -133,6 +156,22 @@ func _clear_connections_for(node_name: StringName) -> void:
 	for conn in all_connections:
 		if conn.from_node == node_name or conn.to_node == node_name:
 			graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
+
+
+func _undo_restore_node(saved_data: Dictionary, connections: Array) -> void:
+	# Rebuild just this one node from its serialized data
+	_build_nodes_from_data({"nodes": [saved_data], "connections": []})
+	# Restore connections
+	for conn in connections:
+		graph_edit.connect_node(conn.from, conn.from_port, conn.to, conn.to_port)
+
+
+func undo() -> void:
+	_undo_redo.undo()
+
+
+func redo() -> void:
+	_undo_redo.redo()
 
 
 func _ensure_registry() -> void:

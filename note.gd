@@ -217,6 +217,14 @@ func _input(event: InputEvent) -> void:
 			KEY_O: open_dialog.popup_centered(Vector2i(600, 400)); get_viewport().set_input_as_handled()
 			KEY_S: _save(); get_viewport().set_input_as_handled()
 
+	if event is InputEventKey and event.pressed and event.ctrl_pressed and _current_view == "graph":
+		match event.keycode:
+			KEY_Z:
+				if event.shift_pressed:
+					graph_view.redo(); get_viewport().set_input_as_handled()
+				else:
+					graph_view.undo(); get_viewport().set_input_as_handled()
+
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
 		_switch_view("graph" if _current_view == "edit" else "edit")
 		get_viewport().set_input_as_handled()
