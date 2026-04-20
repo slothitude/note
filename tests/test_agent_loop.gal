@@ -1,0 +1,10 @@
+# Agent node assembly test (headless: no trigger since HTTP unavailable)
+node agent agent at 0 0
+set agent.model llama3.2
+set agent.max_turns 3
+
+node prompt notepad at 0 150
+set prompt.text hello
+
+wire prompt.out -> agent.prompt
+expect prompt.out == hello

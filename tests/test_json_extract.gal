@@ -1,0 +1,7 @@
+node src notepad
+node extract json
+set src.text {"name":"Godot","version":4}
+set extract.path name
+wire src.out -> extract.json
+trigger extract
+expect extract.result == Godot

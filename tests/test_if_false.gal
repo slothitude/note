@@ -1,0 +1,6 @@
+node data notepad
+node gate if
+set data.text payload
+wire data.out -> gate.data
+trigger gate
+expect gate.false == payload

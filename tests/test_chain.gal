@@ -1,0 +1,13 @@
+node a notepad
+node m math
+node out math
+set a.text 3
+set m.mode ADD
+set out.mode MUL
+wire a.out -> m.a
+wire a.out -> m.b
+trigger m
+wire m.result -> out.a
+wire m.result -> out.b
+trigger out
+expect out.result == 36

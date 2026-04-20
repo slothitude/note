@@ -1,0 +1,21 @@
+# Test: Ollama API call with response parsing
+node body notepad at 0 0
+set body.text {"model":"llama3.2","prompt":"Say hello in one word","stream":false}
+
+node req http at 300 0
+set req.url http://localhost:11434/api/generate
+set req.method POST
+wire body.out -> req.body
+
+node parse json at 550 0
+set parse.path response
+wire req.response -> parse.json
+
+node output notepad at 800 0
+wire parse.result -> output.set
+
+node errlog notepad at 800 150
+wire parse.error -> errlog.set
+wire req.error -> errlog.append
+
+trigger req

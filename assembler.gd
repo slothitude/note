@@ -11,6 +11,8 @@ const INPUT_PORTS := {
 	"pc": {"increment": 0, "restart": 1, "jump": 2, "enable": "enable_port"},
 	"timer": {"prompt": 0, "start": 1, "interval": 2, "enable": "enable_port"},
 	"http": {"url": 0, "body": 1, "headers": 2, "enable": "enable_port", "trigger": "trigger_port"},
+	"json": {"json": 0, "path": 1, "enable": "enable_port", "trigger": "trigger_port"},
+	"agent": {"prompt": 0, "system": 1, "url": 2, "enable": "enable_port", "trigger": "trigger_port"},
 	"button": {},
 	"subgraph": {},
 	"graph_input": {},
@@ -28,6 +30,8 @@ const OUTPUT_PORTS := {
 	"pc": {"out0": 3, "out1": 4, "out2": 5, "out3": 6, "out4": 7, "out5": 8},
 	"timer": {"out": 5},
 	"http": {"response": 3, "error": 4},
+	"json": {"result": 2, "error": 3},
+	"agent": {"result": 3, "log": 4},
 	"button": {"out": 0},
 	"subgraph": {},
 	"graph_input": {"out": 0},
@@ -52,6 +56,8 @@ const VALID_PROPS := {
 	"pc": ["counter", "max"],
 	"timer": ["prompt_text", "interval", "mode", "count"],
 	"http": ["url", "body", "headers", "method"],
+	"json": ["json_text", "path"],
+	"agent": ["model", "max_turns"],
 	"button": ["title"],
 	"subgraph": [],
 	"graph_input": [],
@@ -69,6 +75,8 @@ const TYPE_PREFIXES := {
 	"pc": "PC",
 	"timer": "Timer",
 	"http": "Http",
+	"json": "Json",
+	"agent": "Agent",
 	"button": "Button",
 	"subgraph": "SubGraph",
 	"graph_input": "GInput",
@@ -81,6 +89,7 @@ var _label_types: Dictionary = {}
 var _node_data: Array = []
 var _wire_data: Array = []
 var _trigger_labels: Array = []
+var _expect_data: Array[Dictionary] = []
 var _counters: Dictionary = {}
 
 
@@ -91,6 +100,7 @@ func parse(source: String) -> Dictionary:
 	_node_data.clear()
 	_wire_data.clear()
 	_trigger_labels.clear()
+	_expect_data.clear()
 	_counters.clear()
 
 	var lines := source.split("\n")
@@ -107,6 +117,7 @@ func parse(source: String) -> Dictionary:
 		"nodes": _node_data,
 		"connections": _wire_data,
 		"triggers": _trigger_labels,
+		"expects": _expect_data,
 	}
 
 
@@ -134,8 +145,10 @@ func _parse_line(line: String, line_num: int) -> void:
 			_parse_wire(rest, line_num)
 		"trigger":
 			_parse_trigger(rest, line_num)
+		"expect":
+			_parse_expect(rest, line_num)
 		_:
-			_errors.append("Line %d: Unknown keyword '%s'. Expected: node, set, wire, trigger" % [line_num, keyword])
+			_errors.append("Line %d: Unknown keyword '%s'. Expected: node, set, wire, trigger, expect" % [line_num, keyword])
 
 
 func _parse_node(rest: String, line_num: int) -> void:
@@ -294,3 +307,37 @@ func _parse_trigger(rest: String, line_num: int) -> void:
 		_errors.append("Line %d: Unknown label '%s'" % [line_num, label])
 		return
 	_trigger_labels.append(label)
+
+
+func _parse_expect(rest: String, line_num: int) -> void:
+	# Format: <label>.<port> == <value>
+	var eq_pos := rest.find(" == ")
+	if eq_pos == -1:
+		_errors.append("Line %d: expect requires <label>.<port> == <value>" % line_num)
+		return
+
+	var left := rest.left(eq_pos).strip_edges()
+	var value := rest.substr(eq_pos + 4).strip_edges()
+
+	var dot_pos := left.find(".")
+	if dot_pos == -1:
+		_errors.append("Line %d: expect requires <label>.<port>" % line_num)
+		return
+
+	var label := left.left(dot_pos)
+	var port_name := left.substr(dot_pos + 1)
+
+	if not _labels.has(label):
+		_errors.append("Line %d: Unknown label '%s'" % [line_num, label])
+		return
+
+	var type: String = _label_types[label]
+	if not OUTPUT_PORTS[type].has(port_name):
+		_errors.append("Line %d: Unknown output port '%s' for %s" % [line_num, port_name, type])
+		return
+
+	_expect_data.append({
+		"label": label,
+		"port": port_name,
+		"value": value,
+	})

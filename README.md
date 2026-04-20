@@ -155,6 +155,38 @@ Named button. Also appears in title bar in Edit view.
 
 - Prompts for name on creation
 
+### JSON
+Extracts values from JSON using dot-path notation.
+
+| Port | Side | Color | Description |
+|------|------|-------|-------------|
+| 0 | Input | Cyan | JSON text (`json`) |
+| 1 | Input | Cyan | Dot-path (`path`) |
+| - | Input | Yellow | Enable |
+| - | Input | Red | Trigger |
+| 2 | Output | Green | Extracted value (`result`) |
+| 3 | Output | Red | Error text (`error`) |
+
+- Path examples: `name`, `items.0.title`, `data.nested.key`
+
+### Agent
+Self-contained ReAct agent loop. Calls Ollama, parses structured JSON, executes tools, repeats until done.
+
+| Port | Side | Color | Description |
+|------|------|-------|-------------|
+| 0 | Input | White | Prompt (`prompt`) |
+| 1 | Input | Magenta | System prompt (`system`) |
+| 2 | Input | Cyan | Ollama API URL (`url`) |
+| - | Input | Yellow | Enable |
+| - | Input | Red | Trigger |
+| 3 | Output | Green | Final answer (`result`) |
+| 4 | Output | Red | Execution trace (`log`) |
+
+- **Tools**: `exec(command)`, `read_file(path)`, `write_file(path\ncontent)`
+- **Configurable**: Model name, max turns (1-10)
+- **Stop button** cancels a running loop
+- Default URL: `http://localhost:11434/api/chat`
+
 ### Sub-Graph
 Contains a nested graph. Click Edit to enter.
 
@@ -246,6 +278,8 @@ wire a -> b          # same as wire a.out -> b.set
 | http | `url`, `body`, `headers`, `enable`, `trigger` |
 | exec | `command`, `trigger`, `enable` |
 | find_file | `query`, `enable`, `trigger` |
+| json | `json`, `path`, `enable`, `trigger` |
+| agent | `prompt`, `system`, `url`, `enable`, `trigger` |
 
 ### Output Ports
 
@@ -262,6 +296,8 @@ wire a -> b          # same as wire a.out -> b.set
 | exec | `stdout`, `stderr` |
 | button | `out` |
 | find_file | `result` |
+| json | `result`, `error` |
+| agent | `result`, `log` |
 
 ### Properties
 
@@ -276,6 +312,7 @@ wire a -> b          # same as wire a.out -> b.set
 | timer | `prompt_text`, `interval`, `mode` (one-shot, countdown), `count` |
 | http | `url`, `body`, `headers`, `method` (GET, POST, PUT, DELETE) |
 | button | `title` |
+| agent | `model`, `max_turns` |
 | exec | `enabled` |
 
 ### Trigger

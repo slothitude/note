@@ -11,18 +11,23 @@ var enabled: bool = true
 var enable_port: int = -1
 var trigger_port: int = -1
 
-@onready var result_label: Label = $Result
-@onready var mode_option: OptionButton = $ModeOption
+var result_label: Label
+var mode_option: OptionButton
 
 
 func _ready() -> void:
+	if enable_port >= 0:
+		return
+	result_label = get_node_or_null("Result")
+	mode_option = get_node_or_null("ModeOption")
 	title = "Math"
-	mode_option.add_item("ADD")
-	mode_option.add_item("SUB")
-	mode_option.add_item("MUL")
-	mode_option.add_item("DIV")
-	mode_option.add_item("MOD")
-	mode_option.add_item("POW")
+	if mode_option != null:
+		mode_option.add_item("ADD")
+		mode_option.add_item("SUB")
+		mode_option.add_item("MUL")
+		mode_option.add_item("DIV")
+		mode_option.add_item("MOD")
+		mode_option.add_item("POW")
 	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(2, false, 0, Color.WHITE, false, 0, Color.WHITE)
@@ -70,7 +75,7 @@ func set_input(port: int, text: String) -> void:
 func _evaluate() -> void:
 	var a: float = input_a.to_float() if input_a != "" else 0.0
 	var b: float = input_b.to_float() if input_b != "" else 0.0
-	var mode := mode_option.selected
+	var mode := mode_option.selected if mode_option != null else 0
 	match mode:
 		0: output_value = _fmt(a + b)
 		1: output_value = _fmt(a - b)
@@ -78,7 +83,8 @@ func _evaluate() -> void:
 		3: output_value = "ERROR" if b == 0.0 else _fmt(a / b)
 		4: output_value = "ERROR" if b == 0.0 else _fmt(fmod(a, b))
 		5: output_value = _fmt(pow(a, b))
-	result_label.text = output_value
+	if result_label != null:
+		result_label.text = output_value
 	text_updated.emit()
 
 

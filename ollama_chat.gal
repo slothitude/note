@@ -1,0 +1,22 @@
+# Ollama Chat Pipeline
+# Edit the "body" notepad with your prompt, then trigger the request
+node body notepad at 0 0
+set body.text {"model":"llama3.2","prompt":"What is GDScript?","stream":false}
+
+node req http at 250 0
+set req.url http://localhost:11434/api/generate
+set req.method POST
+wire body.out -> req.body
+
+node parse json at 500 0
+set parse.path response
+wire req.response -> parse.json
+
+node output notepad at 750 0
+wire parse.result -> output.set
+
+node errlog notepad at 750 150
+wire parse.error -> errlog.set
+wire req.error -> errlog.append
+
+trigger req
