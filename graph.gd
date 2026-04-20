@@ -2,23 +2,31 @@ extends VBoxContainer
 
 signal notepad_selected(node: GraphNode)
 
-const NotepadNodeScene := preload("res://notepad_node.tscn")
-const ExecNodeScene := preload("res://exec_node.tscn")
-const FindFileNodeScene := preload("res://find_file_node.tscn")
-const BoolNodeScene := preload("res://bool_node.tscn")
-const PCNodeScene := preload("res://pc_node.tscn")
-const SubGraphNodeScene := preload("res://sub_graph_node.tscn")
-const GraphInputNodeScene := preload("res://graph_input_node.tscn")
-const GraphOutputNodeScene := preload("res://graph_output_node.tscn")
-const TimerNodeScene := preload("res://timer_node.tscn")
-const BinaryNodeScene := preload("res://binary_node.tscn")
-const IfNodeScene := preload("res://if_node.tscn")
-const HTTPNodeScene := preload("res://http_node.tscn")
-const MathNodeScene := preload("res://math_node.tscn")
-const ButtonNodeScene := preload("res://button_node.tscn")
-const JsonNodeScene := preload("res://json_node.tscn")
-const AgentNodeScene := preload("res://agent_node.tscn")
 const AssemblerScript := preload("res://assembler.gd")
+
+# Node registry: type -> { scene, prefix, menu_label }
+# Adding a new node type = one entry here + assembler.gd constants
+var _NODE_REGISTRY: Dictionary = {}
+
+func _init_registry() -> void:
+	_NODE_REGISTRY = {
+		"notepad": { "scene": preload("res://notepad_node.tscn"), "prefix": "Notepad", "menu": "Notepad" },
+		"exec": { "scene": preload("res://exec_node.tscn"), "prefix": "Exec", "menu": "Execute" },
+		"find_file": { "scene": preload("res://find_file_node.tscn"), "prefix": "FindFile", "menu": "Find File" },
+		"bool": { "scene": preload("res://bool_node.tscn"), "prefix": "Bool", "menu": "Bool" },
+		"math": { "scene": preload("res://math_node.tscn"), "prefix": "Math", "menu": "Math" },
+		"binary": { "scene": preload("res://binary_node.tscn"), "prefix": "Binary", "menu": "Binary" },
+		"if": { "scene": preload("res://if_node.tscn"), "prefix": "If", "menu": "If" },
+		"pc": { "scene": preload("res://pc_node.tscn"), "prefix": "PC", "menu": "PC" },
+		"timer": { "scene": preload("res://timer_node.tscn"), "prefix": "Timer", "menu": "Timer" },
+		"subgraph": { "scene": preload("res://sub_graph_node.tscn"), "prefix": "SubGraph", "menu": "Sub-Graph" },
+		"http": { "scene": preload("res://http_node.tscn"), "prefix": "Http", "menu": "HTTP" },
+		"button": { "scene": preload("res://button_node.tscn"), "prefix": "Button", "menu": "Button" },
+		"json": { "scene": preload("res://json_node.tscn"), "prefix": "Json", "menu": "JSON" },
+		"agent": { "scene": preload("res://agent_node.tscn"), "prefix": "Agent", "menu": "Agent" },
+		"graph_input": { "scene": preload("res://graph_input_node.tscn"), "prefix": "GInput", "menu": "" },
+		"graph_output": { "scene": preload("res://graph_output_node.tscn"), "prefix": "GOutput", "menu": "" },
+	}
 
 var _node_counter := 0
 var _assembling := false
@@ -33,6 +41,7 @@ var _context_spawn_pos := Vector2.ZERO
 
 
 func _ready() -> void:
+	_init_registry()
 	_setup_style()
 	_connect_signals()
 	_build_node_menus()
@@ -67,38 +76,24 @@ func _build_node_menus() -> void:
 
 
 func _populate_node_menu(menu: PopupMenu) -> void:
-	menu.add_item("Notepad", 0)
-	menu.add_item("Execute", 1)
-	menu.add_item("Find File", 2)
-	menu.add_item("Bool", 3)
-	menu.add_item("Binary", 4)
-	menu.add_item("If", 5)
-	menu.add_item("PC", 6)
-	menu.add_item("Timer", 7)
-	menu.add_item("Sub-Graph", 8)
-	menu.add_item("HTTP", 9)
-	menu.add_item("Math", 10)
-	menu.add_item("Button", 11)
-	menu.add_item("JSON", 12)
-	menu.add_item("Agent", 13)
+	var id := 0
+	for type in _NODE_REGISTRY:
+		var label: String = _NODE_REGISTRY[type].get("menu", "")
+		if label != "":
+			menu.add_item(label, id)
+			id += 1
 
 
 func _on_add_node_menu(id: int) -> void:
-	match id:
-		0: add_notepad_node()
-		1: add_exec_node()
-		2: add_find_file_node()
-		3: add_bool_node()
-		4: add_binary_node()
-		5: add_if_node()
-		6: add_pc_node()
-		7: add_timer_node()
-		8: add_sub_graph_node()
-		9: add_http_node()
-		10: add_math_node()
-		11: add_button_node()
-		12: add_json_node()
-		13: add_agent_node()
+	var idx := 0
+	for type in _NODE_REGISTRY:
+		var label: String = _NODE_REGISTRY[type].get("menu", "")
+		if label == "":
+			continue
+		if idx == id:
+			_add_node(type)
+			return
+		idx += 1
 
 
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
@@ -140,15 +135,40 @@ func _clear_connections_for(node_name: StringName) -> void:
 			graph_edit.disconnect_node(conn.from_node, conn.from_port, conn.to_node, conn.to_port)
 
 
-func _add_default_notepad() -> void:
-	var node := NotepadNodeScene.instantiate()
-	node.name = "Notepad%d" % _node_counter
+func _ensure_registry() -> void:
+	if _NODE_REGISTRY.is_empty():
+		_init_registry()
+
+
+func _add_node(type: String) -> GraphNode:
+	_ensure_registry()
+	var reg: Dictionary = _NODE_REGISTRY.get(type, {})
+	if reg.is_empty():
+		return null
+	var node: GraphNode = reg.scene.instantiate()
+	node.name = "%s%d" % [reg.prefix, _node_counter]
 	_node_counter += 1
 	node.position_offset = _get_next_node_position()
-	node.open_pressed.connect(_on_notepad_open)
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
+	_connect_node_signals(node)
 	graph_edit.add_child(node)
+	return node
+
+
+func _connect_node_signals(node: GraphNode) -> void:
+	if node.has_signal("delete_pressed"):
+		node.delete_pressed.connect(_on_node_delete)
+	if node.has_signal("text_updated"):
+		node.text_updated.connect(_propagate_text.bind(node))
+	if node.has_signal("run_pressed"):
+		node.run_pressed.connect(_on_node_run)
+	if node.has_signal("open_pressed"):
+		node.open_pressed.connect(_on_notepad_open)
+	if node.has_signal("edit_pressed"):
+		node.edit_pressed.connect(_on_enter_subgraph)
+
+
+func _add_default_notepad() -> void:
+	var node := _add_node("notepad")
 	var temp_path := OS.get_temp_dir().path_join("note_untitled.tmp")
 	if FileAccess.file_exists(temp_path):
 		var f := FileAccess.open(temp_path, FileAccess.READ)
@@ -158,180 +178,75 @@ func _add_default_notepad() -> void:
 
 
 func add_default_notepad() -> void:
-	var node := NotepadNodeScene.instantiate()
-	node.name = "Notepad%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.open_pressed.connect(_on_notepad_open)
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("notepad")
 
 
 func add_notepad_node() -> void:
-	var node := NotepadNodeScene.instantiate()
-	node.name = "Notepad%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.open_pressed.connect(_on_notepad_open)
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("notepad")
 
 
 func add_exec_node() -> void:
-	var node := ExecNodeScene.instantiate()
-	node.name = "Exec%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.run_pressed.connect(_on_node_run)
-	node.delete_pressed.connect(_on_node_delete)
-	graph_edit.add_child(node)
+	_add_node("exec")
 
 
 func add_find_file_node() -> void:
-	var node := FindFileNodeScene.instantiate()
-	node.name = "FindFile%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("find_file")
 
 
 func add_bool_node() -> void:
-	var node := BoolNodeScene.instantiate()
-	node.name = "Bool%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("bool")
 
 
 func add_binary_node() -> void:
-	var node := BinaryNodeScene.instantiate()
-	node.name = "Binary%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("binary")
 
 
 func add_pc_node() -> void:
-	var node := PCNodeScene.instantiate()
-	node.name = "PC%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("pc")
 
 
 func add_timer_node() -> void:
-	var node := TimerNodeScene.instantiate()
-	node.name = "Timer%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("timer")
 
 
 func add_if_node() -> void:
-	var node := IfNodeScene.instantiate()
-	node.name = "If%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("if")
 
 
 func add_http_node() -> void:
-	var node := HTTPNodeScene.instantiate()
-	node.name = "Http%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("http")
 
 
 func add_math_node() -> void:
-	var node := MathNodeScene.instantiate()
-	node.name = "Math%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("math")
 
 
 func add_button_node() -> void:
-	var node := ButtonNodeScene.instantiate()
-	node.name = "Button%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("button")
 
 
 func add_json_node() -> void:
-	var node := JsonNodeScene.instantiate()
-	node.name = "Json%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("json")
 
 
 func add_agent_node() -> void:
-	var node := AgentNodeScene.instantiate()
-	node.name = "Agent%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("agent")
 
 
 func add_sub_graph_node() -> void:
-	var node := SubGraphNodeScene.instantiate()
-	node.name = "SubGraph%d" % _node_counter
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.edit_pressed.connect(_on_enter_subgraph)
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
+	_add_node("subgraph")
 
 
 func add_graph_input_node() -> void:
-	var node := GraphInputNodeScene.instantiate()
+	var node := _add_node("graph_input")
 	var idx := _count_node_type("graph_input")
-	node.name = "GInput%d" % _node_counter
 	node.title = "Input %d" % idx
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
 
 
 func add_graph_output_node() -> void:
-	var node := GraphOutputNodeScene.instantiate()
+	var node := _add_node("graph_output")
 	var idx := _count_node_type("graph_output")
-	node.name = "GOutput%d" % _node_counter
 	node.title = "Output %d" % idx
-	_node_counter += 1
-	node.position_offset = _get_next_node_position()
-	node.delete_pressed.connect(_on_node_delete)
-	node.text_updated.connect(_propagate_text.bind(node))
-	graph_edit.add_child(node)
 
 
 func _count_node_type(type: String) -> int:
@@ -858,22 +773,11 @@ func get_node_output(node: GraphNode, port: int) -> String:
 
 
 func _create_node_by_type(type: String) -> GraphNode:
-	match type:
-		"notepad": return NotepadNodeScene.instantiate()
-		"exec": return ExecNodeScene.instantiate()
-		"find_file": return FindFileNodeScene.instantiate()
-		"bool": return BoolNodeScene.instantiate()
-		"math": return MathNodeScene.instantiate()
-		"if": return IfNodeScene.instantiate()
-		"binary": return BinaryNodeScene.instantiate()
-		"pc": return PCNodeScene.instantiate()
-		"timer": return TimerNodeScene.instantiate()
-		"http": return HTTPNodeScene.instantiate()
-		"json": return JsonNodeScene.instantiate()
-		"button": return ButtonNodeScene.instantiate()
-		"agent": return AgentNodeScene.instantiate()
-		"subgraph": return SubGraphNodeScene.instantiate()
-		_: return NotepadNodeScene.instantiate()
+	_ensure_registry()
+	var reg: Dictionary = _NODE_REGISTRY.get(type, {})
+	if reg.is_empty():
+		return _NODE_REGISTRY["notepad"].scene.instantiate()
+	return reg.scene.instantiate()
 
 
 func _apply_props(node: GraphNode, type: String, props: Dictionary) -> void:
@@ -1076,7 +980,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 	for node_data in data.nodes:
 		var node: GraphNode
 		if node_data.type == "notepad":
-			node = NotepadNodeScene.instantiate()
+			node = _create_node_by_type("notepad")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1091,7 +995,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("enabled"):
 				node.enabled = node_data.enabled
 		elif node_data.type == "pc":
-			node = PCNodeScene.instantiate()
+			node = _create_node_by_type("pc")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1104,7 +1008,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.max_spin.value = int(node_data.max_val)
 			node.call("_update_display")
 		elif node_data.type == "bool":
-			node = BoolNodeScene.instantiate()
+			node = _create_node_by_type("bool")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1119,7 +1023,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.mode_option.selected = int(node_data.mode)
 			node.call("_evaluate")
 		elif node_data.type == "timer":
-			node = TimerNodeScene.instantiate()
+			node = _create_node_by_type("timer")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1137,7 +1041,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.count_spin.value = int(node_data.count)
 			node.call("_update_status")
 		elif node_data.type == "find_file":
-			node = FindFileNodeScene.instantiate()
+			node = _create_node_by_type("find_file")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1148,7 +1052,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.file_path = node_data.file_path
 				node.result.text = node_data.file_path
 		elif node_data.type == "binary":
-			node = BinaryNodeScene.instantiate()
+			node = _create_node_by_type("binary")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1159,7 +1063,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.output_value = node_data.output_value
 				node.toggle_btn.text = node_data.output_value
 		elif node_data.type == "if":
-			node = IfNodeScene.instantiate()
+			node = _create_node_by_type("if")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1172,7 +1076,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.data_text = node_data.data_text
 			node.call("_evaluate")
 		elif node_data.type == "subgraph":
-			node = SubGraphNodeScene.instantiate()
+			node = _create_node_by_type("subgraph")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1188,7 +1092,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("stored_outputs"):
 				node.stored_outputs = node_data.stored_outputs
 		elif node_data.type == "math":
-			node = MathNodeScene.instantiate()
+			node = _create_node_by_type("math")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1203,7 +1107,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.mode_option.selected = int(node_data.mode)
 			node.call("_evaluate")
 		elif node_data.type == "graph_input":
-			node = GraphInputNodeScene.instantiate()
+			node = _create_node_by_type("graph_input")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1213,7 +1117,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("title"):
 				node.title = node_data.title
 		elif node_data.type == "http":
-			node = HTTPNodeScene.instantiate()
+			node = _create_node_by_type("http")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1234,7 +1138,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("error_text"):
 				node.error_text = node_data.error_text
 		elif node_data.type == "graph_output":
-			node = GraphOutputNodeScene.instantiate()
+			node = _create_node_by_type("graph_output")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1244,7 +1148,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("title"):
 				node.title = node_data.title
 		elif node_data.type == "button":
-			node = ButtonNodeScene.instantiate()
+			node = _create_node_by_type("button")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1252,7 +1156,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.text_updated.connect(_propagate_text.bind(node))
 			parent.add_child(node)
 		elif node_data.type == "agent":
-			node = AgentNodeScene.instantiate()
+			node = _create_node_by_type("agent")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1272,7 +1176,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 			if node_data.has("log_text"):
 				node.log_text = node_data.log_text
 		elif node_data.type == "json":
-			node = JsonNodeScene.instantiate()
+			node = _create_node_by_type("json")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
@@ -1289,7 +1193,7 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.error_text = node_data.error_text
 			node.call("_update_display")
 		else:
-			node = ExecNodeScene.instantiate()
+			node = _create_node_by_type("exec")
 			node.name = node_data.name
 			node.position_offset = Vector2(node_data.x, node_data.y)
 			if connect_signals:
