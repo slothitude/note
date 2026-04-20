@@ -303,4 +303,4 @@ func _update_title() -> void:
 	var fn := "Untitled" if current_file_path == "" else current_file_path.get_file()
 	var s := "*" if unsaved else ""
 	var v := "Graph" if _current_view == "graph" else "Edit"
-	DisplayServer.window_set_title("Note [%s] - %s%s" % [v, fn, s])
+	DisplayServer.window_set_title("Loom [%s] - %s%s" % [v, fn, s])

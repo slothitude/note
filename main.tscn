@@ -6,7 +6,7 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toolbar"]
 bg_color = Color(0.1, 0.1, 0.1, 1)
 
-[node name="Note" type="Control"]
+[node name="Loom" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
