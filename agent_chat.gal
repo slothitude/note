@@ -1,0 +1,21 @@
+# Agent Chat
+# Self-contained ReAct agent: LLM → parse → tool exec → repeat
+# Tools: exec (shell), read_file, write_file
+# 1. Edit the "prompt" notepad with your question
+# 2. Click Run on the agent, or trigger it
+node prompt notepad at 0 0
+set prompt.text What files are in the current directory?
+
+node agent agent at 300 0
+set agent.model llama3.2
+set agent.max_turns 5
+
+wire prompt.out -> agent.prompt
+
+node output notepad at 600 0
+wire agent.result -> output.set
+
+node log notepad at 600 200
+wire agent.log -> log.set
+
+trigger agent

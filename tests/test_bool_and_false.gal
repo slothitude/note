@@ -1,0 +1,7 @@
+node a notepad
+node check bool
+set a.text yes
+set check.mode AND
+wire a.out -> check.a
+trigger check
+expect check.result == false

@@ -48,6 +48,14 @@ text = "Save"
 layout_mode = 2
 text = "Assemble"
 
+[node name="LoadGalBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Load .gal"
+
+[node name="TestBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Tests"
+
 [node name="Spacer" type="Control" parent="Toolbar" unique_id=578789044]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -67,3 +75,5 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/OpenBtn" to="." method="_on_open_graph"]
 [connection signal="pressed" from="Toolbar/SaveBtn" to="." method="_on_save_graph"]
 [connection signal="pressed" from="Toolbar/AsmBtn" to="." method="_on_assemble_btn"]
+[connection signal="pressed" from="Toolbar/LoadGalBtn" to="." method="_on_load_gal_btn"]
+[connection signal="pressed" from="Toolbar/TestBtn" to="." method="_on_test_btn"]

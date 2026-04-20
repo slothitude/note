@@ -1,0 +1,10 @@
+node a notepad
+node b notepad
+node sum math
+set a.text 10
+set b.text 20
+set sum.mode ADD
+wire a.out -> sum.a
+wire b.out -> sum.b
+trigger sum
+expect sum.result == 30

@@ -1,0 +1,56 @@
+{
+	"connections": [
+		{
+			"from_node": "Notepad0",
+			"from_port": 0,
+			"to_node": "Notepad4",
+			"to_port": 1
+		},
+		{
+			"from_node": "Notepad4",
+			"from_port": 0,
+			"to_node": "GOutput6",
+			"to_port": 0
+		},
+		{
+			"from_node": "GInput8",
+			"from_port": 0,
+			"to_node": "Notepad0",
+			"to_port": 2
+		}
+	],
+	"nodes": [
+		{
+			"enabled": true,
+			"file_path": "",
+			"name": "Notepad0",
+			"text": "cat ",
+			"type": "notepad",
+			"x": 120.0,
+			"y": 220.0
+		},
+		{
+			"enabled": true,
+			"file_path": "",
+			"name": "Notepad4",
+			"text": "cat cat hello",
+			"type": "notepad",
+			"x": 540.0,
+			"y": 220.0
+		},
+		{
+			"name": "GOutput6",
+			"title": "Output",
+			"type": "graph_output",
+			"x": 1020.0,
+			"y": 240.0
+		},
+		{
+			"name": "GInput8",
+			"output_value": "",
+			"type": "binary",
+			"x": -440.0,
+			"y": 240.0
+		}
+	]
+}

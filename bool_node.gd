@@ -10,15 +10,20 @@ var enabled: bool = true
 var enable_port: int = -1
 var trigger_port: int = -1
 
-@onready var result_label: Label = $Result
-@onready var mode_option: OptionButton = $ModeOption
+var result_label: Label
+var mode_option: OptionButton
 
 
 func _ready() -> void:
+	if enable_port >= 0:
+		return
+	result_label = get_node_or_null("Result")
+	mode_option = get_node_or_null("ModeOption")
 	title = "Bool"
-	mode_option.add_item("AND")
-	mode_option.add_item("OR")
-	mode_option.add_item("NOT")
+	if mode_option != null:
+		mode_option.add_item("AND")
+		mode_option.add_item("OR")
+		mode_option.add_item("NOT")
 	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
 	set_slot(2, false, 0, Color.WHITE, true, 0, Color.GREEN)
@@ -65,12 +70,13 @@ func set_input(port: int, text: String) -> void:
 func _evaluate() -> void:
 	var has_a := input_a != ""
 	var has_b := input_b != ""
-	var mode := mode_option.selected
+	var mode := mode_option.selected if mode_option != null else 0
 	match mode:
 		0: output_value = "true" if (has_a and has_b) else "false"
 		1: output_value = "true" if (has_a or has_b) else "false"
 		2: output_value = "true" if not has_a else "false"
-	result_label.text = output_value
+	if result_label != null:
+		result_label.text = output_value
 	text_updated.emit()
 
 

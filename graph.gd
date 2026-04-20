@@ -16,6 +16,8 @@ const IfNodeScene := preload("res://if_node.tscn")
 const HTTPNodeScene := preload("res://http_node.tscn")
 const MathNodeScene := preload("res://math_node.tscn")
 const ButtonNodeScene := preload("res://button_node.tscn")
+const JsonNodeScene := preload("res://json_node.tscn")
+const AgentNodeScene := preload("res://agent_node.tscn")
 const AssemblerScript := preload("res://assembler.gd")
 
 var _node_counter := 0
@@ -77,6 +79,8 @@ func _populate_node_menu(menu: PopupMenu) -> void:
 	menu.add_item("HTTP", 9)
 	menu.add_item("Math", 10)
 	menu.add_item("Button", 11)
+	menu.add_item("JSON", 12)
+	menu.add_item("Agent", 13)
 
 
 func _on_add_node_menu(id: int) -> void:
@@ -93,6 +97,8 @@ func _on_add_node_menu(id: int) -> void:
 		9: add_http_node()
 		10: add_math_node()
 		11: add_button_node()
+		12: add_json_node()
+		13: add_agent_node()
 
 
 func _on_connection_request(from: StringName, from_port: int, to: StringName, to_port: int) -> void:
@@ -273,6 +279,26 @@ func add_button_node() -> void:
 	graph_edit.add_child(node)
 
 
+func add_json_node() -> void:
+	var node := JsonNodeScene.instantiate()
+	node.name = "Json%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = _get_next_node_position()
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
+func add_agent_node() -> void:
+	var node := AgentNodeScene.instantiate()
+	node.name = "Agent%d" % _node_counter
+	_node_counter += 1
+	node.position_offset = _get_next_node_position()
+	node.delete_pressed.connect(_on_node_delete)
+	node.text_updated.connect(_propagate_text.bind(node))
+	graph_edit.add_child(node)
+
+
 func add_sub_graph_node() -> void:
 	var node := SubGraphNodeScene.instantiate()
 	node.name = "SubGraph%d" % _node_counter
@@ -417,6 +443,8 @@ func _get_node_type(child: Node) -> String:
 		return "pc"
 	if child.get("file_path") != null and not child.has_signal("open_pressed") and not child.has_signal("edit_pressed"):
 		return "find_file"
+	if child.get("json_text") != null:
+		return "json"
 	if child.has_method("set_input"):
 		if child.get("is_math_node") != null:
 			return "math"
@@ -429,6 +457,8 @@ func _get_node_type(child: Node) -> String:
 		return "graph_input"
 	if child.has_signal("text_updated") and child.title.begins_with("Output"):
 		return "graph_output"
+	if child.has_method("_start_loop"):
+		return "agent"
 	return "exec"
 
 
@@ -468,6 +498,16 @@ func _serialize_node_data(child: Node, node_data: Dictionary) -> void:
 		node_data["count"] = int(child.count_spin.value)
 	elif t == "find_file":
 		node_data["file_path"] = child.file_path
+	elif t == "json":
+		node_data["json_text"] = child.json_text
+		node_data["path"] = child.path
+		node_data["result_value"] = child.result_value
+		node_data["error_text"] = child.error_text
+	elif t == "agent":
+		node_data["model"] = child.model
+		node_data["max_turns"] = child.max_turns
+		node_data["result_text"] = child.result_text
+		node_data["log_text"] = child.log_text
 	elif t == "subgraph":
 		node_data["internal"] = child.internal_data
 		node_data["stored_inputs"] = child.stored_inputs
@@ -502,7 +542,10 @@ func _serialize_current_graph() -> Dictionary:
 
 
 func _on_node_run(exec_node: GraphNode) -> void:
-	_execute_node(exec_node)
+	if exec_node.has_method("_start_loop"):
+		exec_node._start_loop()
+	else:
+		_execute_node(exec_node)
 
 
 func _execute_node(exec_node: GraphNode) -> void:
@@ -674,7 +717,50 @@ func _on_assemble_confirmed() -> void:
 	assemble(_asm_edit.text)
 
 
-func assemble(source: String) -> void:
+func _on_load_gal_btn() -> void:
+	var dialog := FileDialog.new()
+	dialog.use_native_dialog = true
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.filters = PackedStringArray(["*.gal"])
+	dialog.file_selected.connect(_on_gal_file_selected)
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_gal_file_selected(path: String) -> void:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return
+	var source := f.get_as_text()
+	f.close()
+	assemble(source)
+
+
+func _on_test_btn() -> void:
+	var runner: RefCounted = load("res://test_runner.gd").new()
+	var result: Dictionary = runner.run_all(self)
+	_show_test_results(result)
+
+
+func _show_test_results(result: Dictionary) -> void:
+	var text := "Tests: %d passed, %d failed\n\n" % [result.passed, result.failed]
+	for detail in result.details:
+		var icon := "PASS" if detail.status == "PASS" else "FAIL"
+		text += "[%s] %s\n" % [icon, detail.file.get_file()]
+		if detail.has("failures"):
+			for f in detail.failures:
+				text += "  - %s\n" % f
+	var dlg := AcceptDialog.new()
+	dlg.title = "Test Results"
+	dlg.dialog_text = text
+	add_child(dlg)
+	dlg.popup_centered()
+	dlg.confirmed.connect(dlg.queue_free)
+
+
+func assemble(source: String) -> Dictionary:
 	var parser := AssemblerScript.new()
 	var data: Dictionary = parser.parse(source)
 	if parser.get_errors().size() > 0:
@@ -686,7 +772,7 @@ func assemble(source: String) -> void:
 		add_child(dlg)
 		dlg.popup_centered()
 		dlg.confirmed.connect(dlg.queue_free)
-		return
+		return {}
 
 	_clear_all_nodes()
 	_node_counter = 0
@@ -720,6 +806,8 @@ func assemble(source: String) -> void:
 		if node.has_signal("edit_pressed"):
 			node.edit_pressed.connect(_on_enter_subgraph)
 		graph_edit.add_child(node)
+		if node.has_method("_ready"):
+			node._ready()
 		label_to_node[node_data._label] = node
 		label_to_type[node_data._label] = node_data.type
 		var num_str := ""
@@ -745,6 +833,8 @@ func assemble(source: String) -> void:
 		if from_port >= 0 and to_port >= 0:
 			graph_edit.connect_node(src.name, from_port, dst.name, to_port)
 
+	_assembling = false
+
 	# Phase 3: Propagate
 	for label in label_to_node:
 		var node: GraphNode = label_to_node[label]
@@ -760,7 +850,11 @@ func assemble(source: String) -> void:
 			elif node.has_signal("text_updated"):
 				_propagate_text(node)
 
-	_assembling = false
+	return {"labels": label_to_node, "types": label_to_type}
+
+
+func get_node_output(node: GraphNode, port: int) -> String:
+	return _get_output_text(node, port)
 
 
 func _create_node_by_type(type: String) -> GraphNode:
@@ -775,14 +869,16 @@ func _create_node_by_type(type: String) -> GraphNode:
 		"pc": return PCNodeScene.instantiate()
 		"timer": return TimerNodeScene.instantiate()
 		"http": return HTTPNodeScene.instantiate()
+		"json": return JsonNodeScene.instantiate()
 		"button": return ButtonNodeScene.instantiate()
+		"agent": return AgentNodeScene.instantiate()
 		"subgraph": return SubGraphNodeScene.instantiate()
 		_: return NotepadNodeScene.instantiate()
 
 
 func _apply_props(node: GraphNode, type: String, props: Dictionary) -> void:
 	for prop in props:
-		var val: String = props[prop]
+		var val: String = props[prop].replace("\\n", "\n")
 		match prop:
 			"text":
 				if node.has_method("set_text"):
@@ -839,8 +935,20 @@ func _apply_props(node: GraphNode, type: String, props: Dictionary) -> void:
 				node.set("condition_text", val)
 			"data_text":
 				node.set("data_text", val)
+			"json_text":
+				node.set("json_text", val)
+			"path":
+				node.set("path", val)
 			"title":
 				node.title = val
+			"model":
+				node.set("model", val)
+				if node.get("model_edit") != null:
+					node.model_edit.text = val
+			"max_turns":
+				node.set("max_turns", int(val))
+				if node.get("turns_spin") != null:
+					node.turns_spin.value = int(val)
 
 
 func _resolve_output_port(node: GraphNode, type: String, port_name: String) -> int:
@@ -1143,6 +1251,43 @@ func _build_nodes_from_data(data: Dictionary, parent: Node = graph_edit, connect
 				node.delete_pressed.connect(_on_node_delete)
 				node.text_updated.connect(_propagate_text.bind(node))
 			parent.add_child(node)
+		elif node_data.type == "agent":
+			node = AgentNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
+			if node_data.has("model"):
+				node.model = node_data.model
+				if node.model_edit:
+					node.model_edit.text = node_data.model
+			if node_data.has("max_turns"):
+				node.max_turns = int(node_data.max_turns)
+				if node.turns_spin:
+					node.turns_spin.value = int(node_data.max_turns)
+			if node_data.has("result_text"):
+				node.result_text = node_data.result_text
+			if node_data.has("log_text"):
+				node.log_text = node_data.log_text
+		elif node_data.type == "json":
+			node = JsonNodeScene.instantiate()
+			node.name = node_data.name
+			node.position_offset = Vector2(node_data.x, node_data.y)
+			if connect_signals:
+				node.delete_pressed.connect(_on_node_delete)
+				node.text_updated.connect(_propagate_text.bind(node))
+			parent.add_child(node)
+			if node_data.has("json_text"):
+				node.json_text = node_data.json_text
+			if node_data.has("path"):
+				node.path = node_data.path
+			if node_data.has("result_value"):
+				node.result_value = node_data.result_value
+			if node_data.has("error_text"):
+				node.error_text = node_data.error_text
+			node.call("_update_display")
 		else:
 			node = ExecNodeScene.instantiate()
 			node.name = node_data.name

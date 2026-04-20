@@ -12,10 +12,13 @@ var trigger_port: int = -1
 var _pending_op: String = ""
 var _pending_text: String = ""
 
-@onready var preview: Label = $Preview
+var preview: Label
 
 
 func _ready() -> void:
+	if trigger_port >= 0:
+		return
+	preview = get_node_or_null("Preview")
 	_update_title()
 	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
@@ -84,6 +87,8 @@ func _apply_pending() -> void:
 
 
 func _update_preview() -> void:
+	if preview == null:
+		return
 	var lines := text_buffer.split("\n")
 	var preview_lines := lines.slice(0, 3)
 	var display := "".join(preview_lines)

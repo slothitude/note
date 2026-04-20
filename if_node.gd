@@ -11,10 +11,13 @@ var enabled: bool = true
 var enable_port: int = -1
 var trigger_port: int = -1
 
-@onready var result_label: Label = $Result
+var result_label: Label
 
 
 func _ready() -> void:
+	if enable_port >= 0:
+		return
+	result_label = get_node_or_null("Result")
 	title = "If"
 	set_slot(0, true, 0, Color.YELLOW, false, 0, Color.WHITE)
 	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
@@ -76,7 +79,8 @@ func _evaluate() -> void:
 	else:
 		output_true = ""
 		output_false = data_text
-	result_label.text = "→ true" if cond else "→ false"
+	if result_label != null:
+		result_label.text = "→ true" if cond else "→ false"
 	text_updated.emit()
 
 
