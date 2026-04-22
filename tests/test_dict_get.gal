@@ -1,0 +1,10 @@
+# Test: Dict node GET mode — retrieve value by key
+node src notepad at 0 0
+set src.text name: Alice\nage: 30
+
+node d dict at 200 0
+set d.mode GET
+set d.param name
+
+wire src.out -> d.input
+expect d.result == Alice

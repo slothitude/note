@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal run_pressed(node: GraphNode)
 signal delete_pressed(node: GraphNode)
 
@@ -11,8 +13,7 @@ var enable_port: int = -1
 
 func _ready() -> void:
 	title = "Execute"
-	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
-	set_slot(1, false, 0, Color.WHITE, true, 0, Color.RED)
+	AssemblerScript.configure_slots(self, "exec")
 	set_slot(2, true, 0, Color.YELLOW, false, 0, Color.WHITE)
 	_add_enable_port()
 	print("ExecNode _ready called: ", name)
@@ -51,3 +52,19 @@ func _on_run_pressed() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "exec"
+
+
+func serialize_data() -> Dictionary:
+	return {}
+
+
+func deserialize_data(_d: Dictionary) -> void:
+	pass
+
+
+func get_gal_props(_nd: Dictionary) -> Dictionary:
+	return {}

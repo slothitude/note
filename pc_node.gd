@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -13,15 +15,7 @@ var enable_port: int = -1
 
 func _ready() -> void:
 	title = "PC"
-	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(3, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(4, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(5, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(6, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(7, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(8, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	AssemblerScript.configure_slots(self, "pc")
 	_add_enable_port()
 	_update_display()
 
@@ -83,3 +77,23 @@ func _update_display() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "pc"
+
+
+func serialize_data() -> Dictionary:
+	return {"counter": counter, "max_val": int(max_spin.value)}
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("counter"):
+		counter = int(d.counter)
+	if d.has("max_val") and max_spin != null:
+		max_spin.value = int(d.max_val)
+	call("_update_display")
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	return {"counter": str(nd.get("counter", 0)), "max": str(nd.get("max_val", 10))}

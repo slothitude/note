@@ -1,0 +1,11 @@
+# Test: Regex node MATCH mode with digits
+node np notepad at 0 0
+set np.text Hello World 42
+
+node rx regex at 200 0
+set rx.mode MATCH
+set rx.param [0-9]+
+
+wire np.out -> rx.input
+trigger rx
+expect rx.result == 42

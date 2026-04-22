@@ -137,3 +137,26 @@ func _on_edit_pressed() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "subgraph"
+
+
+func serialize_data() -> Dictionary:
+	var d: Dictionary = {"internal": internal_data, "stored_inputs": stored_inputs, "stored_outputs": stored_outputs}
+	return d
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("internal"):
+		internal_data = d.internal
+		call("_rebuild_ports")
+	if d.has("stored_inputs"):
+		stored_inputs = d.stored_inputs
+	if d.has("stored_outputs"):
+		stored_outputs = d.stored_outputs
+
+
+func get_gal_props(_nd: Dictionary) -> Dictionary:
+	return {}

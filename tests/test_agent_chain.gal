@@ -1,0 +1,10 @@
+# Test: Agent-to-agent wiring
+# Agent A result → Agent B prompt + trigger
+node agent_a agent at 0 0
+node agent_b agent at 300 0
+
+wire agent_a.result -> agent_b.prompt
+wire agent_a.result -> agent_b.trigger
+
+set agent_a.model llama3.2
+set agent_b.model llama3.2

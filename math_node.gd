@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -28,10 +30,7 @@ func _ready() -> void:
 		mode_option.add_item("DIV")
 		mode_option.add_item("MOD")
 		mode_option.add_item("POW")
-	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, false, 0, Color.WHITE, false, 0, Color.WHITE)
-	set_slot(3, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	AssemblerScript.configure_slots(self, "math")
 	_add_control_ports()
 	_evaluate()
 
@@ -102,3 +101,29 @@ func _on_mode_changed(_index: int) -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "math"
+
+
+func serialize_data() -> Dictionary:
+	var d: Dictionary = {"input_a": input_a, "input_b": input_b}
+	if mode_option != null:
+		d["mode"] = mode_option.selected
+	return d
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("input_a"):
+		input_a = d.input_a
+	if d.has("input_b"):
+		input_b = d.input_b
+	if d.has("mode") and mode_option != null:
+		mode_option.selected = int(d.mode)
+	call("_evaluate")
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var mode_map: Dictionary = {0: "ADD", 1: "SUB", 2: "MUL", 3: "DIV", 4: "MOD", 5: "POW"}
+	return {"mode": mode_map.get(nd.get("mode", 0), "ADD")}

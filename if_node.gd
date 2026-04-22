@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -19,10 +21,7 @@ func _ready() -> void:
 		return
 	result_label = get_node_or_null("Result")
 	title = "If"
-	set_slot(0, true, 0, Color.YELLOW, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(3, false, 0, Color.WHITE, true, 0, Color.RED)
+	AssemblerScript.configure_slots(self, "if")
 	_add_control_ports()
 	_evaluate()
 
@@ -86,3 +85,28 @@ func _evaluate() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "if"
+
+
+func serialize_data() -> Dictionary:
+	return {"condition_text": condition_text, "data_text": data_text}
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("condition_text"):
+		condition_text = d.condition_text
+	if d.has("data_text"):
+		data_text = d.data_text
+	call("_evaluate")
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var props: Dictionary = {}
+	if nd.has("condition_text") and nd.condition_text != "":
+		props["condition_text"] = nd.condition_text
+	if nd.has("data_text") and nd.data_text != "":
+		props["data_text"] = nd.data_text
+	return props

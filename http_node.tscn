@@ -12,11 +12,13 @@ script = ExtResource("1_script")
 [node name="MethodOption" type="OptionButton" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-item_count = 4
+item_count = 6
 popup/item_0/text = "GET"
 popup/item_1/text = "POST"
 popup/item_2/text = "PUT"
 popup/item_3/text = "DELETE"
+popup/item_4/text = "PATCH"
+popup/item_5/text = "HEAD"
 
 [node name="UrlEdit" type="LineEdit" parent="."]
 unique_name_in_owner = true

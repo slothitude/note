@@ -1,0 +1,13 @@
+# Test chart nodes parse and assemble
+node bar bar_chart
+set bar.data A:10
+set bar.title Test
+
+node pie pie_chart
+set pie.data X:40
+
+node line line_graph
+set line.data 5,10,15
+
+wire bar.data -> pie.data
+wire bar.data -> line.data

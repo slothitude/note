@@ -1,0 +1,7 @@
+# Test: Loop node RANGE mode — generate range of numbers
+node lp loop at 0 0
+set lp.mode RANGE
+set lp.param 3
+trigger lp
+
+expect lp.result == 0\n1\n2

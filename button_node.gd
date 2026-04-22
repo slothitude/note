@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -11,7 +13,9 @@ var is_button_node := true
 
 func _ready() -> void:
 	title = "Button"
-	set_slot(0, false, 0, Color.WHITE, true, 0, Color.GREEN)
+	AssemblerScript.configure_slots(self, "button")
+	if not Engine.is_editor_hint() and DisplayServer.get_name() == "headless":
+		return
 	_ask_name()
 
 
@@ -51,3 +55,19 @@ func _on_press_pressed() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "button"
+
+
+func serialize_data() -> Dictionary:
+	return {}
+
+
+func deserialize_data(_d: Dictionary) -> void:
+	pass
+
+
+func get_gal_props(_nd: Dictionary) -> Dictionary:
+	return {}

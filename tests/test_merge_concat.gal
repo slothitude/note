@@ -1,0 +1,14 @@
+# Test: Merge node CONCAT mode
+node a notepad at 0 0
+set a.text hello
+
+node b notepad at 0 100
+set b.text world
+
+node m merge at 200 0
+set m.mode CONCAT
+set m.param -
+
+wire a.out -> m.a
+wire b.out -> m.b
+expect m.result == hello-world

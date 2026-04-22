@@ -1,0 +1,9 @@
+# Test: Array node length mode
+node src notepad at 0 0
+set src.text apple\nbanana\ncherry
+
+node a1 array at 200 0
+set a1.mode LENGTH
+
+wire src.out -> a1.input
+expect a1.result == 3

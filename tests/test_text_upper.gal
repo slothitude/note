@@ -1,0 +1,9 @@
+# Test: Text node upper mode
+node src notepad at 0 0
+set src.text hello world
+
+node t1 text at 200 0
+set t1.mode UPPER
+
+wire src.out -> t1.input
+expect t1.result == HELLO WORLD

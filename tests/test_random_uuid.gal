@@ -1,0 +1,5 @@
+# Test: Random node UUID mode — generates a UUID with dashes
+node rnd random at 0 0
+set rnd.mode UUID
+trigger rnd
+expect rnd.result contains -
