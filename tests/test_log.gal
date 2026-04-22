@@ -1,0 +1,7 @@
+# Test Log node
+node lg log at 0 0
+set lg.max 10
+
+node np notepad at 300 0
+set np.text hello
+wire np.out -> lg.value

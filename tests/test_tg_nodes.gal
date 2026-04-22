@@ -1,0 +1,9 @@
+# Test Telegram Receive + Send nodes
+node recv tg_receive at 0 0
+set recv.token test_token
+
+node send tg_send at 300 0
+set send.token test_token
+set send.chat_id 12345
+
+wire recv.message -> send.message

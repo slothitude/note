@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -24,9 +26,12 @@ func _ready() -> void:
 		mode_option.add_item("AND")
 		mode_option.add_item("OR")
 		mode_option.add_item("NOT")
-	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, false, 0, Color.WHITE, true, 0, Color.GREEN)
+		mode_option.add_item("EQ")
+		mode_option.add_item("NEQ")
+		mode_option.add_item("GT")
+		mode_option.add_item("LT")
+		mode_option.add_item("CONTAINS")
+	AssemblerScript.configure_slots(self, "bool")
 	_add_control_ports()
 	_evaluate()
 
@@ -75,6 +80,11 @@ func _evaluate() -> void:
 		0: output_value = "true" if (has_a and has_b) else "false"
 		1: output_value = "true" if (has_a or has_b) else "false"
 		2: output_value = "true" if not has_a else "false"
+		3: output_value = "true" if input_a == input_b else "false"  # EQ
+		4: output_value = "true" if input_a != input_b else "false"  # NEQ
+		5: output_value = "true" if input_a.to_float() > input_b.to_float() else "false"  # GT
+		6: output_value = "true" if input_a.to_float() < input_b.to_float() else "false"  # LT
+		7: output_value = "true" if input_a.find(input_b) >= 0 else "false"  # CONTAINS
 	if result_label != null:
 		result_label.text = output_value
 	text_updated.emit()
@@ -86,3 +96,29 @@ func _on_mode_changed(_index: int) -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "bool"
+
+
+func serialize_data() -> Dictionary:
+	var d: Dictionary = {"input_a": input_a, "input_b": input_b}
+	if mode_option != null:
+		d["mode"] = mode_option.selected
+	return d
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("input_a"):
+		input_a = d.input_a
+	if d.has("input_b"):
+		input_b = d.input_b
+	if d.has("mode") and mode_option != null:
+		mode_option.selected = int(d.mode)
+	call("_evaluate")
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var mode_map: Dictionary = {0: "AND", 1: "OR", 2: "NOT", 3: "EQ", 4: "NEQ", 5: "GT", 6: "LT", 7: "CONTAINS"}
+	return {"mode": mode_map.get(nd.get("mode", 0), "AND")}

@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -19,12 +21,9 @@ var _timer: Timer
 
 func _ready() -> void:
 	title = "Timer"
-	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, true, 0, Color.CYAN, false, 0, Color.WHITE)
+	AssemblerScript.configure_slots(self, "timer")
 	mode_option.add_item("One-shot")
 	mode_option.add_item("Countdown")
-	set_slot(5, false, 0, Color.WHITE, true, 0, Color.GREEN)
 	_add_enable_port()
 	_timer = Timer.new()
 	add_child(_timer)
@@ -108,3 +107,40 @@ func _on_delete_pressed() -> void:
 	if _timer:
 		_timer.stop()
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "timer"
+
+
+func serialize_data() -> Dictionary:
+	var d: Dictionary = {"prompt_text": prompt_text, "interval_secs": interval_secs}
+	if mode_option != null:
+		d["mode"] = mode_option.selected
+	if count_spin != null:
+		d["count"] = int(count_spin.value)
+	return d
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("prompt_text"):
+		prompt_text = d.prompt_text
+		output_value = d.prompt_text
+	if d.has("interval_secs"):
+		interval_secs = float(d.interval_secs)
+	if d.has("mode") and mode_option != null:
+		mode_option.selected = int(d.mode)
+	if d.has("count") and count_spin != null:
+		count_spin.value = int(d.count)
+	call("_update_status")
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var props: Dictionary = {}
+	if nd.has("prompt_text") and nd.prompt_text != "":
+		props["prompt_text"] = nd.prompt_text
+	props["interval"] = str(nd.get("interval_secs", 1.0))
+	var mode_map: Dictionary = {0: "one-shot", 1: "countdown"}
+	props["mode"] = mode_map.get(nd.get("mode", 0), "one-shot")
+	props["count"] = str(nd.get("count", 1))
+	return props

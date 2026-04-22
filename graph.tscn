@@ -32,6 +32,11 @@ layout_mode = 2
 text = "← Back"
 visible = false
 
+[node name="SaveTemplateBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Save Template"
+visible = false
+
 [node name="NewBtn" type="Button" parent="Toolbar"]
 layout_mode = 2
 text = "New"
@@ -56,6 +61,70 @@ text = "Load .gal"
 layout_mode = 2
 text = "Tests"
 
+[node name="DashBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Dashboard"
+
+[node name="ExportGalBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Export GAL"
+
+[node name="FitBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Fit"
+
+[node name="PngBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "PNG"
+
+[node name="LayoutBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Layout"
+
+[node name="WireStyleBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Wire: Dot"
+
+[node name="SnapBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Snap: On"
+
+[node name="ZoomInBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "+"
+
+[node name="ZoomOutBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "-"
+
+[node name="StatsLabel" type="Label" parent="Toolbar"]
+layout_mode = 2
+text = "0 nodes"
+
+[node name="DebugBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Debug"
+
+[node name="DebugStepBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Step"
+visible = false
+
+[node name="DebugRunBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Run All"
+visible = false
+
+[node name="DebugStopBtn" type="Button" parent="Toolbar"]
+layout_mode = 2
+text = "Stop"
+visible = false
+
+[node name="DebugLabel" type="Label" parent="Toolbar"]
+layout_mode = 2
+text = ""
+visible = false
+
 [node name="Spacer" type="Control" parent="Toolbar" unique_id=578789044]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -71,9 +140,23 @@ zoom_min = 0.2
 [connection signal="pressed" from="Toolbar/AddGInput" to="." method="add_graph_input_node"]
 [connection signal="pressed" from="Toolbar/AddGOutput" to="." method="add_graph_output_node"]
 [connection signal="pressed" from="Toolbar/BackBtn" to="." method="_on_exit_subgraph"]
+[connection signal="pressed" from="Toolbar/SaveTemplateBtn" to="." method="_on_save_template"]
 [connection signal="pressed" from="Toolbar/NewBtn" to="." method="_on_new_graph"]
 [connection signal="pressed" from="Toolbar/OpenBtn" to="." method="_on_open_graph"]
 [connection signal="pressed" from="Toolbar/SaveBtn" to="." method="_on_save_graph"]
 [connection signal="pressed" from="Toolbar/AsmBtn" to="." method="_on_assemble_btn"]
 [connection signal="pressed" from="Toolbar/LoadGalBtn" to="." method="_on_load_gal_btn"]
 [connection signal="pressed" from="Toolbar/TestBtn" to="." method="_on_test_btn"]
+[connection signal="pressed" from="Toolbar/DashBtn" to="." method="toggle_dashboard"]
+[connection signal="pressed" from="Toolbar/ExportGalBtn" to="." method="_on_export_gal_btn"]
+[connection signal="pressed" from="Toolbar/FitBtn" to="." method="zoom_to_fit"]
+[connection signal="pressed" from="Toolbar/PngBtn" to="." method="_on_export_png_btn"]
+[connection signal="pressed" from="Toolbar/LayoutBtn" to="." method="auto_layout"]
+[connection signal="pressed" from="Toolbar/WireStyleBtn" to="." method="_on_wire_style_btn"]
+[connection signal="pressed" from="Toolbar/SnapBtn" to="." method="_on_snap_btn"]
+[connection signal="pressed" from="Toolbar/ZoomInBtn" to="." method="_on_zoom_in"]
+[connection signal="pressed" from="Toolbar/ZoomOutBtn" to="." method="_on_zoom_out"]
+[connection signal="pressed" from="Toolbar/DebugBtn" to="." method="_on_debug_btn"]
+[connection signal="pressed" from="Toolbar/DebugStepBtn" to="." method="_debug_step"]
+[connection signal="pressed" from="Toolbar/DebugRunBtn" to="." method="_debug_run_all"]
+[connection signal="pressed" from="Toolbar/DebugStopBtn" to="." method="_debug_stop"]

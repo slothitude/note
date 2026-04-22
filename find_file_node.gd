@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -14,7 +16,7 @@ var _search_text: String = ""
 
 func _ready() -> void:
 	title = "Find File"
-	set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
+	AssemblerScript.configure_slots(self, "find_file")
 	_add_control_ports()
 
 
@@ -77,3 +79,22 @@ func _search_for_file(fname: String) -> String:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "find_file"
+
+
+func serialize_data() -> Dictionary:
+	return {"file_path": file_path}
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("file_path") and d.file_path != "":
+		file_path = d.file_path
+		if result != null:
+			result.text = file_path
+
+
+func get_gal_props(_nd: Dictionary) -> Dictionary:
+	return {}

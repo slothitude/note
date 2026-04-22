@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -19,10 +21,7 @@ func _ready() -> void:
 		return
 	result_label = get_node_or_null("Result")
 	title = "JSON"
-	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.MAGENTA, false, 0, Color.WHITE)
-	set_slot(2, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(3, false, 0, Color.WHITE, true, 0, Color.RED)
+	AssemblerScript.configure_slots(self, "json")
 	_add_control_ports()
 	_update_display()
 
@@ -165,3 +164,32 @@ func _update_display() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "json"
+
+
+func serialize_data() -> Dictionary:
+	return {"json_text": json_text, "path": path, "result_value": result_value, "error_text": error_text}
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("json_text"):
+		json_text = d.json_text
+	if d.has("path"):
+		path = d.path
+	if d.has("result_value"):
+		result_value = d.result_value
+	if d.has("error_text"):
+		error_text = d.error_text
+	call("_update_display")
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var props: Dictionary = {}
+	if nd.has("json_text") and nd.json_text != "":
+		props["json_text"] = nd.json_text
+	if nd.has("path") and nd.path != "":
+		props["path"] = nd.path
+	return props

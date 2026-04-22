@@ -1,0 +1,9 @@
+# Test: Agent node with z.ai API configuration
+node ag agent at 0 0
+set ag.model glm-4.7
+set ag.api_key a63a2a7ee2d5431d929c776122e3b706.hzHjrJlnfPd7cYfj
+
+node url notepad at 0 150
+set url.text https://api.z.ai/api/coding/paas/v4/chat/completions
+
+wire url.out -> ag.url

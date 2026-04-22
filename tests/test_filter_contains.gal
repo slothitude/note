@@ -1,0 +1,10 @@
+# Test: Filter node CONTAINS mode
+node np notepad at 0 0
+set np.text apple\nbanana\navocado\ncherry
+
+node f filter at 200 0
+set f.mode CONTAINS
+set f.param a
+
+wire np.out -> f.input
+expect f.result contains apple

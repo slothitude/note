@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal open_pressed(node: GraphNode)
 signal delete_pressed(node: GraphNode)
 signal text_updated
@@ -20,9 +22,7 @@ func _ready() -> void:
 		return
 	preview = get_node_or_null("Preview")
 	_update_title()
-	set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(2, true, 0, Color.GREEN, false, 0, Color.WHITE)
+	AssemblerScript.configure_slots(self, "notepad")
 	set_slot(3, true, 0, Color.YELLOW, false, 0, Color.WHITE)
 	_add_trigger_port()
 
@@ -103,3 +103,29 @@ func _on_open_pressed() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "notepad"
+
+
+func serialize_data() -> Dictionary:
+	return {"text": text_buffer, "file_path": file_path, "enabled": enabled}
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("text"):
+		set_text(d.text)
+	if d.has("file_path") and d.file_path != "":
+		set_file(d.file_path)
+	if d.has("enabled"):
+		enabled = d.enabled
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var props: Dictionary = {}
+	if nd.has("text") and nd.text != "":
+		props["text"] = nd.text
+	if nd.has("file_path") and nd.file_path != "":
+		props["file_path"] = nd.file_path
+	return props

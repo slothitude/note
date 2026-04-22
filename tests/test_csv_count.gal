@@ -1,0 +1,10 @@
+# Test: CSV node COUNT mode
+node np notepad at 0 0
+set np.text name,age\nAlice,30\nBob,25\nCarol,35
+
+node cv csv at 200 0
+set cv.mode COUNT
+
+wire np.out -> cv.input
+trigger cv
+expect cv.result == 3

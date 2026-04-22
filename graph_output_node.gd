@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -8,7 +10,7 @@ var text_buffer: String = ""
 
 func _ready() -> void:
 	title = "Output"
-	set_slot(0, true, 0, Color.GREEN, false, 0, Color.WHITE)
+	AssemblerScript.configure_slots(self, "graph_output")
 
 
 func set_text(text: String) -> void:
@@ -18,3 +20,20 @@ func set_text(text: String) -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "graph_output"
+
+
+func serialize_data() -> Dictionary:
+	return {"title": title}
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("title"):
+		title = d.title
+
+
+func get_gal_props(_nd: Dictionary) -> Dictionary:
+	return {}

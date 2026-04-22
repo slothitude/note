@@ -1,5 +1,7 @@
 extends GraphNode
 
+const AssemblerScript := preload("res://assembler.gd")
+
 signal delete_pressed(node: GraphNode)
 signal text_updated
 
@@ -19,11 +21,7 @@ var trigger_port: int = -1
 
 func _ready() -> void:
 	title = "HTTP"
-	set_slot(0, true, 0, Color.CYAN, false, 0, Color.WHITE)
-	set_slot(1, true, 0, Color.YELLOW, false, 0, Color.WHITE)
-	set_slot(2, true, 0, Color.MAGENTA, false, 0, Color.WHITE)
-	set_slot(3, false, 0, Color.WHITE, true, 0, Color.GREEN)
-	set_slot(4, false, 0, Color.WHITE, true, 0, Color.RED)
+	AssemblerScript.configure_slots(self, "http")
 	_add_control_ports()
 
 	var http := HTTPRequest.new()
@@ -90,6 +88,8 @@ func _send_request() -> void:
 		1: method = HTTPClient.METHOD_POST
 		2: method = HTTPClient.METHOD_PUT
 		3: method = HTTPClient.METHOD_DELETE
+		4: method = HTTPClient.METHOD_PATCH
+		5: method = HTTPClient.METHOD_HEAD
 	status_label.text = "Sending..."
 	var headers: PackedStringArray = _parse_headers()
 	if method != HTTPClient.METHOD_GET:
@@ -136,3 +136,44 @@ func _on_send() -> void:
 
 func _on_delete_pressed() -> void:
 	delete_pressed.emit(self)
+
+
+func get_node_type() -> String:
+	return "http"
+
+
+func serialize_data() -> Dictionary:
+	var d: Dictionary = {"url": url, "body": body, "headers_text": headers_text, "response_text": response_text, "error_text": error_text}
+	if method_option != null:
+		d["method"] = method_option.selected
+	return d
+
+
+func deserialize_data(d: Dictionary) -> void:
+	if d.has("url"):
+		url = d.url
+		if url_edit != null:
+			url_edit.text = url
+	if d.has("body"):
+		body = d.body
+	if d.has("headers_text"):
+		headers_text = d.headers_text
+	if d.has("method") and method_option != null:
+		method_option.selected = int(d.method)
+	if d.has("response_text"):
+		response_text = d.response_text
+	if d.has("error_text"):
+		error_text = d.error_text
+
+
+func get_gal_props(nd: Dictionary) -> Dictionary:
+	var props: Dictionary = {}
+	if nd.has("url") and nd.url != "":
+		props["url"] = nd.url
+	if nd.has("body") and nd.body != "":
+		props["body"] = nd.body
+	if nd.has("headers_text") and nd.headers_text != "":
+		props["headers"] = nd.headers_text
+	var method_map: Dictionary = {0: "GET", 1: "POST", 2: "PUT", 3: "DELETE", 4: "PATCH", 5: "HEAD"}
+	props["method"] = method_map.get(nd.get("method", 0), "GET")
+	return props

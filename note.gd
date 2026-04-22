@@ -31,6 +31,7 @@ func _ready() -> void:
 	_connect_signals()
 	_update_title()
 	_load_temp()
+	_load_window_state()
 	_select_default_notepad()
 	text_edit.grab_focus()
 	_switch_view("edit")
@@ -158,7 +159,8 @@ func _switch_view(view: String) -> void:
 		text_edit.visible = true
 		graph_view.visible = false
 		if _selected_notepad != null:
-			text_edit.text = _selected_notepad.text_buffer
+			var raw_text: String = _selected_notepad.text_buffer
+			text_edit.text = graph_view.resolve_template(raw_text)
 		_show_graph_buttons()
 		text_edit.grab_focus()
 	else:
@@ -224,10 +226,42 @@ func _input(event: InputEvent) -> void:
 					graph_view.redo(); get_viewport().set_input_as_handled()
 				else:
 					graph_view.undo(); get_viewport().set_input_as_handled()
+			KEY_C:
+				graph_view.copy_selected(); get_viewport().set_input_as_handled()
+			KEY_V:
+				graph_view.paste_nodes(); get_viewport().set_input_as_handled()
+			KEY_F:
+				_toggle_search(); get_viewport().set_input_as_handled()
+			KEY_D:
+				graph_view.duplicate_selected(); get_viewport().set_input_as_handled()
 
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
 		_switch_view("graph" if _current_view == "edit" else "edit")
 		get_viewport().set_input_as_handled()
+
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F2:
+		_toggle_help()
+		get_viewport().set_input_as_handled()
+
+	if event is InputEventKey and event.pressed and _current_view == "graph":
+		match event.keycode:
+			KEY_F5:
+				graph_view._debug_step(); get_viewport().set_input_as_handled()
+			KEY_F6:
+				graph_view._debug_run_all(); get_viewport().set_input_as_handled()
+
+	if event is InputEventKey and event.pressed and _help_visible():
+		_hide_help()
+		get_viewport().set_input_as_handled()
+
+	# Search bar: Enter to find next, Escape to close
+	if event is InputEventKey and _search_visible():
+		if event.keycode == KEY_ENTER:
+			graph_view.search_next()
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_ESCAPE:
+			_hide_search()
+			get_viewport().set_input_as_handled()
 
 
 func _on_text_changed() -> void:
@@ -275,10 +309,44 @@ func _write_file(path: String) -> void:
 
 func _auto_save_and_quit() -> void:
 	_save_temp()
+	_save_window_state()
 	graph_view.save_graph()
 	if current_file_path != "" and unsaved:
 		_write_file(current_file_path)
 	get_tree().quit()
+
+
+const _WINDOW_STATE_PATH := "user://window_state.json"
+
+func _save_window_state() -> void:
+	var data := {
+		"pos_x": DisplayServer.window_get_position().x,
+		"pos_y": DisplayServer.window_get_position().y,
+		"size_x": DisplayServer.window_get_size().x,
+		"size_y": DisplayServer.window_get_size().y,
+	}
+	var f := FileAccess.open(_WINDOW_STATE_PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(data))
+		f.close()
+
+
+func _load_window_state() -> void:
+	if not FileAccess.file_exists(_WINDOW_STATE_PATH):
+		return
+	var f := FileAccess.open(_WINDOW_STATE_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var json := JSON.new()
+	if json.parse(f.get_as_text()) != OK:
+		f.close()
+		return
+	f.close()
+	var data: Dictionary = json.data
+	if data.has("pos_x") and data.has("pos_y"):
+		DisplayServer.window_set_position(Vector2i(int(data.pos_x), int(data.pos_y)))
+	if data.has("size_x") and data.has("size_y"):
+		DisplayServer.window_set_size(Vector2i(int(data.size_x), int(data.size_y)))
 
 
 func _select_default_notepad() -> void:
@@ -312,3 +380,130 @@ func _update_title() -> void:
 	var s := "*" if unsaved else ""
 	var v := "Graph" if _current_view == "graph" else "Edit"
 	DisplayServer.window_set_title("Loom [%s] - %s%s" % [v, fn, s])
+
+
+func _toggle_help() -> void:
+	if _help_visible():
+		_hide_help()
+		return
+	var overlay := PanelContainer.new()
+	overlay.name = "HelpOverlay"
+	overlay.set_anchors_preset(Control.PRESET_CENTER)
+	overlay.offset_left = -200
+	overlay.offset_top = -180
+	overlay.offset_right = 200
+	overlay.offset_bottom = 180
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.05, 0.05, 0.05, 0.95)
+	ps.border_color = Color.WHITE
+	ps.set_border_width_all(1)
+	ps.set_corner_radius_all(8)
+	overlay.add_theme_stylebox_override("panel", ps)
+	var vbox := VBoxContainer.new()
+	overlay.add_child(vbox)
+	var header := Label.new()
+	header.text = "Keyboard Shortcuts"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.add_theme_color_override("font_color", Color.WHITE)
+	vbox.add_child(header)
+	var shortcuts := [
+		"F1  —  Toggle Edit / Graph view",
+		"F2  —  Show this help",
+		"Ctrl+N  —  New file",
+		"Ctrl+O  —  Open file",
+		"Ctrl+S  —  Save file",
+		"Ctrl+Z  —  Undo (graph)",
+		"Ctrl+Shift+Z  —  Redo (graph)",
+		"Ctrl+C  —  Copy nodes (graph)",
+		"Ctrl+V  —  Paste nodes (graph)",
+		"Ctrl+F  —  Find nodes (graph)",
+		"Ctrl+D  —  Duplicate nodes (graph)",
+		"Ctrl+A  —  Select all nodes (graph)",
+		"1-9  —  Quick-add node types (graph)",
+		"Delete  —  Delete selected nodes (graph)",
+		"Ctrl+Shift+L  —  Align selected left (graph)",
+		"Ctrl+Shift+T  —  Align selected top (graph)",
+		"Ctrl+Shift+H  —  Distribute horizontal (graph)",
+		"Ctrl+Shift+V  —  Distribute vertical (graph)",
+		"F5  —  Debug step (graph)",
+		"F6  —  Debug run all (graph)",
+	]
+	for s in shortcuts:
+		var lbl := Label.new()
+		lbl.text = s
+		lbl.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8, 1.0))
+		vbox.add_child(lbl)
+	var hint := Label.new()
+	hint.text = "Press any key to close"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 1.0))
+	vbox.add_child(hint)
+	add_child(overlay)
+
+
+func _help_visible() -> bool:
+	return get_node_or_null("HelpOverlay") != null
+
+
+func _hide_help() -> void:
+	var overlay := get_node_or_null("HelpOverlay")
+	if overlay:
+		overlay.queue_free()
+
+
+func _toggle_search() -> void:
+	if _search_visible():
+		_hide_search()
+		return
+	var bar := HBoxContainer.new()
+	bar.name = "SearchBar"
+	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	bar.offset_top = 4
+	bar.offset_bottom = 32
+	bar.offset_left = 100
+	bar.offset_right = -100
+	var edit := LineEdit.new()
+	edit.name = "SearchEdit"
+	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	edit.placeholder_text = "Search nodes..."
+	edit.clear_button_enabled = true
+	var dark := Color(0.1, 0.1, 0.1, 1.0)
+	var white := Color.WHITE
+	edit.add_theme_color_override("background_color", dark)
+	edit.add_theme_color_override("font_color", white)
+	edit.add_theme_color_override("caret_color", white)
+	edit.add_theme_color_override("placeholder_color", Color(0.5, 0.5, 0.5, 1.0))
+	var style := StyleBoxFlat.new()
+	style.bg_color = dark; style.border_color = white; style.set_border_width_all(1); style.set_corner_radius_all(4)
+	edit.add_theme_stylebox_override("normal", style)
+	edit.text_changed.connect(_on_search_text_changed)
+	bar.add_child(edit)
+	var count_lbl := Label.new()
+	count_lbl.name = "SearchCount"
+	count_lbl.text = "0/0"
+	count_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7, 1.0))
+	bar.add_child(count_lbl)
+	add_child(bar)
+	edit.grab_focus()
+
+
+func _on_search_text_changed(text: String) -> void:
+	graph_view.search_nodes(text)
+	var bar := get_node_or_null("SearchBar")
+	if bar:
+		var count_lbl: Label = bar.get_node_or_null("SearchCount")
+		if count_lbl:
+			var results: int = graph_view._search_results.size()
+			var idx: int = graph_view._search_index + 1 if results > 0 else 0
+			count_lbl.text = "%d/%d" % [idx, results]
+
+
+func _search_visible() -> bool:
+	return get_node_or_null("SearchBar") != null
+
+
+func _hide_search() -> void:
+	var bar := get_node_or_null("SearchBar")
+	if bar:
+		bar.queue_free()

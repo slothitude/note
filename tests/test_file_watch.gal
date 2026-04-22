@@ -1,0 +1,7 @@
+# Test File Watch node
+node fw file_watch at 0 0
+set fw.file_path user://test_watch.txt
+set fw.interval 2
+
+node np notepad at 300 0
+wire fw.content -> np.set

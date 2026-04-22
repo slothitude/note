@@ -1,0 +1,5 @@
+# Test: Date node NOW mode — outputs current unix timestamp
+node d1 date at 0 0
+set d1.mode NOW
+trigger d1
+expect d1.result > 1000000000
